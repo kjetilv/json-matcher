@@ -15,22 +15,18 @@ class JsonMatcherTest {
 
     private JsonMatcher subsetMatcher;
 
-    private JsonMatcher subseqMatcher;
-
-    private DefaultJsonMatcher exactMatcher;
+    private JsonMatcher exactMatcher;
 
     @BeforeEach
     void setUp() {
         JsonNode json = json(JSON);
-        subsetMatcher = new DefaultJsonMatcher(json, ArrayStrategy.SUBSET);
-        subseqMatcher = new DefaultJsonMatcher(json, ArrayStrategy.SUBSEQ);
-        exactMatcher = new DefaultJsonMatcher(json, ArrayStrategy.EXACT);
+        subsetMatcher = JsonMatchers.node(json, JsonMatchers.ArrayStrategy.SUBSET);
+        exactMatcher = JsonMatchers.node(json, JsonMatchers.ArrayStrategy.EXACT);
     }
 
     @AfterEach
     void tearDown() {
         subsetMatcher = null;
-        subseqMatcher = null;
         exactMatcher = null;
     }
 
@@ -171,14 +167,14 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotExactMatch() {
-        JsonMatcher matcher = new DefaultJsonMatcher(
+        JsonMatcher matcher = JsonMatchers.node(
             json(
                 """
                 {
                   "foo": [ 1, 2, 3 ]
                 }
                 """),
-            ArrayStrategy.EXACT);
+            JsonMatchers.ArrayStrategy.EXACT);
         assertNotPart(
             matcher,
             """
@@ -213,14 +209,14 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotSubsequence() {
-        JsonMatcher matcher = new DefaultJsonMatcher(
+        JsonMatcher matcher = JsonMatchers.node(
             json(
                 """
                 {
                   "foo": [ 1, 2, 3, 4, 5 ]
                 }
                 """),
-            ArrayStrategy.SUBSEQ);
+            JsonMatchers.ArrayStrategy.SUBSEQ);
         assertNotPart(
             matcher,
             """
