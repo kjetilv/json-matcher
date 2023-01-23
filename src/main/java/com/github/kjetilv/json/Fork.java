@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import static com.github.kjetilv.json.JsonUtils.arrayElements;
-import static com.github.kjetilv.json.Pathway.noMatchOption;
+import static com.github.kjetilv.json.Pathway.deadEndOption;
 
 record Fork(Path path) implements Path {
 
@@ -16,8 +16,9 @@ record Fork(Path path) implements Path {
         return mains.flatMap(node ->
                 path.through(node, trace))
             .filter(Pathway::found)
-            .findFirst().or(() ->
-                noMatchOption(main, trace))
+            .findFirst()
+            .or(() ->
+                deadEndOption(main, trace))
             .stream();
     }
 }

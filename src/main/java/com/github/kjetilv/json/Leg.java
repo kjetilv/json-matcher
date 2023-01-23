@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import static com.github.kjetilv.json.JsonUtils.addTo;
-import static com.github.kjetilv.json.Pathway.noMatchStream;
+import static com.github.kjetilv.json.Pathway.deadEndStream;
 
 record Leg(String name, Path next) implements Path {
 
@@ -14,6 +14,6 @@ record Leg(String name, Path next) implements Path {
     public Stream<Pathway> through(JsonNode main, List<String> trace) {
         return main.hasNonNull(name)
             ? next.through(main.get(name), addTo(trace, name))
-            : noMatchStream(main, trace);
+            : deadEndStream(main, trace);
     }
 }

@@ -9,19 +9,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 record Pathway(JsonNode main, JsonNode expected, List<String> trace) {
 
-    static Optional<Pathway> noMatchOption(JsonNode main, List<String> trace) {
-        return Optional.of(noMatch(main, trace));
+    static Stream<Pathway> deadEndStream(JsonNode main, List<String> trace) {
+        return deadEndOption(main, trace).stream();
     }
 
-    static Stream<Pathway> noMatchStream(JsonNode main, List<String> trace) {
-        return Stream.of(noMatch(main, trace));
+    static Optional<Pathway> deadEndOption(JsonNode main, List<String> trace) {
+        return Optional.of(deadEnd(main, trace));
     }
 
-    public static Pathway noMatch(JsonNode expected, List<String> trace) {
+    public static Pathway deadEnd(JsonNode expected, List<String> trace) {
         return new Pathway(null, expected, trace);
     }
 
-    static Stream<Pathway> possibleMatch(JsonNode main, JsonNode expected, List<String> trace) {
+    static Stream<Pathway> arrived(JsonNode main, JsonNode expected, List<String> trace) {
         return Stream.of(new Pathway(main, expected, trace));
     }
 
@@ -32,7 +32,7 @@ record Pathway(JsonNode main, JsonNode expected, List<String> trace) {
         List<Path> paths
     ) {
         return mainElements.size() != paths.size()
-            ? noMatchStream(main, trace)
+            ? deadEndStream(main, trace)
             : Zip.of(paths, mainElements)
                 .flatMap(xy ->
                     xy.x().through(xy.y()));

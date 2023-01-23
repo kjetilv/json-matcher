@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import static com.github.kjetilv.json.JsonUtils.arrayElements;
-import static com.github.kjetilv.json.Pathway.noMatchStream;
+import static com.github.kjetilv.json.Pathway.deadEndStream;
 
 record SubArray(List<Path> paths) implements Path {
 
@@ -16,14 +16,14 @@ record SubArray(List<Path> paths) implements Path {
     public Stream<Pathway> through(JsonNode main, List<String> trace) {
         List<JsonNode> mainElements = arrayElements(main).toList();
         if (mainElements.size() < paths.size()) {
-            return noMatchStream(main, trace);
+            return deadEndStream(main, trace);
         }
         OptionalInt firstMatch = IntStream.range(0, mainElements.size())
             .filter(i ->
                 paths.get(0).through(mainElements.get(i)).allMatch(Pathway::found))
             .findFirst();
         if (firstMatch.isEmpty()) {
-            return noMatchStream(main, trace);
+            return deadEndStream(main, trace);
         }
         return Pathway.exactPaths(
             main,
