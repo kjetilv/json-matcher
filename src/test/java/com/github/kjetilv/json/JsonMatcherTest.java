@@ -13,15 +13,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("SameParameterValue")
 class JsonMatcherTest {
 
-    private JsonMatcher subsetMatcher;
+    private StructureMatcher<JsonNode> subsetMatcher;
 
-    private JsonMatcher exactMatcher;
+    private StructureMatcher<JsonNode> exactMatcher;
 
     @BeforeEach
     void setUp() {
         JsonNode json = json(JSON);
-        subsetMatcher = JsonMatchers.node(json, JsonMatchers.ArrayStrategy.SUBSET);
-        exactMatcher = JsonMatchers.node(json, JsonMatchers.ArrayStrategy.EXACT);
+        subsetMatcher = StructureMatchers.node(
+            json,
+            new JsonNodeStructure(),
+            StructureMatchers.ArrayStrategy.SUBSET);
+        exactMatcher = StructureMatchers.node(
+            json,
+            new JsonNodeStructure(),
+            StructureMatchers.ArrayStrategy.EXACT);
     }
 
     @AfterEach
@@ -167,14 +173,15 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotExactMatch() {
-        JsonMatcher matcher = JsonMatchers.node(
+        StructureMatcher<JsonNode> matcher = StructureMatchers.node(
             json(
                 """
                 {
                   "foo": [ 1, 2, 3 ]
                 }
                 """),
-            JsonMatchers.ArrayStrategy.EXACT);
+            new JsonNodeStructure(),
+            StructureMatchers.ArrayStrategy.EXACT);
         assertNotPart(
             matcher,
             """
@@ -209,14 +216,15 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotSubsequence() {
-        JsonMatcher matcher = JsonMatchers.node(
+        StructureMatcher<JsonNode> matcher = StructureMatchers.node(
             json(
                 """
                 {
                   "foo": [ 1, 2, 3, 4, 5 ]
                 }
                 """),
-            JsonMatchers.ArrayStrategy.SUBSEQ);
+            new JsonNodeStructure(),
+            StructureMatchers.ArrayStrategy.SUBSEQ);
         assertNotPart(
             matcher,
             """
@@ -430,13 +438,13 @@ class JsonMatcherTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private static void assertNotPart(JsonMatcher matcher, String content) {
+    private static void assertNotPart(StructureMatcher<JsonNode> matcher, String content) {
         assertThat(matcher.contains(json(content)))
             .describedAs("Should not be part: " + content)
             .isFalse();
     }
 
-    private static void assertPart(JsonMatcher matcher, String content) {
+    private static void assertPart(StructureMatcher<JsonNode> matcher, String content) {
         assertThat(matcher.contains(json(content)))
             .describedAs("Should be a part: " + content)
             .isTrue();

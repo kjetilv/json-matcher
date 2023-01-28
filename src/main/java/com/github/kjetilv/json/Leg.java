@@ -1,19 +1,25 @@
 package com.github.kjetilv.json;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import static com.github.kjetilv.json.Pathway.deadEnd;
 
-import static com.github.kjetilv.json.JsonUtils.addTo;
-import static com.github.kjetilv.json.Pathway.deadEndStream;
-
-record Leg(String name, Path next) implements Path {
+record Leg<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Pathway> through(JsonNode main, List<String> trace) {
-        return main.hasNonNull(name)
-            ? next.through(main.get(name), addTo(trace, name))
-            : deadEndStream(main, trace);
+    public Stream<Pathway<T>> through(T main, List<String> trace) {
+        return structure.get(main, name)
+            .map(field ->
+                next.through(field, addTo(trace, name)))
+            .orElseGet(() ->
+                Stream.of(deadEnd(main, trace)));
+    }
+
+    private static List<String> addTo(List<String> list, String added) {
+        return list == null
+            ? Collections.singletonList(added)
+            : Stream.concat(list.stream(), Stream.of(added)).toList();
     }
 }

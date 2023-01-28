@@ -3,22 +3,19 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import static com.github.kjetilv.json.Pathway.deadEnd;
 
-import static com.github.kjetilv.json.JsonUtils.arrayElements;
-import static com.github.kjetilv.json.Pathway.deadEndOption;
-
-record Fork(Path path) implements Path {
+record Fork<T>(Path<T> path, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Pathway> through(JsonNode main, List<String> trace) {
-        Stream<JsonNode> mains = arrayElements(main);
-        return mains.flatMap(node ->
+    public Stream<Pathway<T>> through(T main, List<String> trace) {
+        Stream<T> mains = structure.arrayElements(main);
+        Pathway<T> pathway = mains.flatMap(node ->
                 path.through(node, trace))
             .filter(Pathway::found)
             .findFirst()
-            .or(() ->
-                deadEndOption(main, trace))
-            .stream();
+            .orElseGet(() ->
+                deadEnd(main, trace));
+        return Stream.of(pathway);
     }
 }

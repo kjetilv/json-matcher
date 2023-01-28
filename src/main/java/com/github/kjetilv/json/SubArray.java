@@ -5,34 +5,27 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import static com.github.kjetilv.json.JsonUtils.arrayElements;
-import static com.github.kjetilv.json.Pathway.deadEndStream;
-
-record SubArray(List<Path> paths) implements Path {
+record SubArray<T>(List<Path<T>> paths, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Pathway> through(JsonNode main, List<String> trace) {
-        List<JsonNode> mainElements = arrayElements(main).toList();
+    public Stream<Pathway<T>> through(T main, List<String> trace) {
+        List<T> mainElements = structure.arrayElements(main).toList();
         if (mainElements.size() < paths.size()) {
-            return deadEndStream(main, trace);
+            return Stream.of(Pathway.deadEnd(main, trace));
         }
         OptionalInt firstMatch = IntStream.range(0, mainElements.size())
             .filter(i ->
-                paths.get(0).through(mainElements.get(i)).allMatch(Pathway::found))
+                paths.get(0).through(mainElements.get(i))
+                    .allMatch(Pathway::found))
             .findFirst();
         if (firstMatch.isEmpty()) {
-            return deadEndStream(main, trace);
+            return Stream.of(Pathway.deadEnd(main, trace));
         }
-        return Pathway.exactPaths(
-            main,
-            trace,
-            subsequence(firstMatch.getAsInt(), mainElements),
-            paths);
+        List<T> subsequence = subsequence(firstMatch.getAsInt(), mainElements);
+        return Pathway.exactPaths(main, trace, subsequence, paths);
     }
 
-    private List<JsonNode> subsequence(int startIndex, List<JsonNode> nodes) {
+    private List<T> subsequence(int startIndex, List<T> nodes) {
         return nodes.subList(
             startIndex,
             Math.min(nodes.size(), startIndex + paths.size()));

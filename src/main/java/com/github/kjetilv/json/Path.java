@@ -3,14 +3,12 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-sealed interface Path
+sealed interface Path<T>
     permits Leg, SubArray, Array, Destination, Fork {
 
-    default Stream<Pathway> through(JsonNode main) {
+    default Stream<Pathway<T>> through(T main) {
         return through(main, null);
     }
 
-    Stream<Pathway> through(JsonNode main, List<String> trace);
+    Stream<Pathway<T>> through(T main, List<String> trace);
 }

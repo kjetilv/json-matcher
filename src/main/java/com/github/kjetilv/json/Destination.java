@@ -3,12 +3,10 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-record Destination(JsonNode expected) implements Path {
+record Destination<T>(T expected) implements Path<T> {
 
     @Override
-    public Stream<Pathway> through(JsonNode main, List<String> trace) {
+    public Stream<Pathway<T>> through(T main, List<String> trace) {
         return Pathway.arrived(main, expected, trace);
     }
 }
