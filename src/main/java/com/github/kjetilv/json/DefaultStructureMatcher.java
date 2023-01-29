@@ -3,7 +3,11 @@ package com.github.kjetilv.json;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-record DefaultStructureMatcher<T>(T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy)
+record DefaultStructureMatcher<T>(
+    T main,
+    Structure<T> structure,
+    StructureMatchers.ArrayStrategy arrayStrategy
+)
     implements StructureMatcher<T> {
 
     DefaultStructureMatcher(T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) {
