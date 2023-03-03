@@ -5,35 +5,28 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 record DefaultStructureMatcher<T>(
-    T main,
-    Structure<T> structure,
-    StructureMatchers.ArrayStrategy arrayStrategy
-)
-    implements StructureMatcher<T> {
+    T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) implements StructureMatcher<T> {
 
     static <T> Stream<Search> exactPaths(
-        T main,
-        List<String> trace,
-        List<T> mainElements,
-        List<Path<T>> paths
+        T main, List<String> trace, List<T> mainElements, List<Path<T>> paths
     ) {
-        Stream<Search> matches = Zip.of(paths, mainElements)
-            .flatMap((Zip.Pair<Path<T>, T> pathAndNode) ->
-                pathAndNode.p1().through(pathAndNode.p2()));
+        Stream<Search>
+            matches =
+            Zip.of(paths, mainElements)
+                .flatMap((Zip.Pair<Path<T>, T> pathAndNode) -> pathAndNode.p1().through(pathAndNode.p2()));
         if (paths.size() < mainElements.size()) {
             return Stream.concat(
                 matches,
-                mainElements.subList(paths.size(), mainElements.size()).stream().map(element ->
-                    DeadEnd.deadEnd(element, trace))
-            );
+                mainElements.subList(paths.size(), mainElements.size())
+                    .stream()
+                    .map(element -> DeadEnd.deadEnd(element, trace)));
         }
         if (paths.size() <= mainElements.size()) {
             return matches;
         }
         return Stream.concat(
             matches,
-            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path ->
-                path.through(null)));
+            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path -> path.through(null)));
     }
 
     DefaultStructureMatcher(T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) {
@@ -44,9 +37,7 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public boolean contains(T part) {
-        List<? extends Search> list = ((Stream<? extends Search>) pathsIn(part)
-            .flatMap(path -> path.through(main))).toList();
-        return new PathsMatch<>(list).matches();
+        return new PathsMatch<>(pathsIn(part).flatMap(path -> path.through(main)).toList()).matches();
     }
 
     @Override
@@ -57,10 +48,10 @@ record DefaultStructureMatcher<T>(
     private Stream<Path<T>> pathsIn(T part) {
         if (structure.isObject(part)) {
             return Stream.of(new Legs<>(
-                structure.mapNamedFields(part, (name, subNode) ->
-                        pathsIn(subNode).map(path ->
-                                new Leg<>(name, path, structure)))
-                    .toList(), structure));
+                structure.mapNamedFields(
+                    part,
+                    (name, subNode) -> pathsIn(subNode).map(path -> new Leg<>(name, path, structure))).toList(),
+                structure));
         }
         if (structure.isArray(part)) {
             return navigate(structure.mapArrayElements(part, this::pathsIn));
