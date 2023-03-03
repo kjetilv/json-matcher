@@ -11,30 +11,35 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
 
     @Override
     public boolean isObject(JsonNode object) {
-        return object.isObject();
+        return object != null && object.isObject();
     }
 
     @Override
     public boolean isArray(JsonNode array) {
-        return array.isArray();
+        return array != null && array.isArray();
     }
 
     @Override
     public Optional<JsonNode> get(JsonNode object, String field) {
-        return Optional.ofNullable(object.get(field)).filter(jsonNode -> !jsonNode.isNull());
+        return Optional.ofNullable(object)
+            .filter(node -> !node.isNull())
+            .map(node -> node.get(field))
+            .filter(jsonNode -> !jsonNode.isNull());
     }
 
     @Override
     public Stream<JsonNode> arrayElements(JsonNode array) {
-        return stream(array::elements);
+        return array == null || array.isNull() ? Stream.empty() : stream(array::elements);
     }
 
     @Override
     public Stream<Map.Entry<String, JsonNode>> namedFields(JsonNode object) {
-        return stream(object::fields);
+        return object == null || object.isNull() ? Stream.empty() : stream(object::fields);
     }
 
     private static <T> Stream<T> stream(Iterable<T> elements) {
-        return StreamSupport.stream(elements.spliterator(), false);
+        return elements != null && elements.iterator().hasNext()
+            ? StreamSupport.stream(elements.spliterator(), false)
+            : Stream.empty();
     }
 }

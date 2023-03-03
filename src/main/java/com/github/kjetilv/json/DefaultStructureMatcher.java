@@ -1,5 +1,6 @@
 package com.github.kjetilv.json;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -10,6 +11,31 @@ record DefaultStructureMatcher<T>(
 )
     implements StructureMatcher<T> {
 
+    static <T> Stream<Search<T>> exactPaths(
+        T main,
+        List<String> trace,
+        List<T> mainElements,
+        List<Path<T>> paths
+    ) {
+        Stream<Search<T>> matches = Zip.of(paths, mainElements)
+            .flatMap((Zip.Pair<Path<T>, T> pathAndNode) ->
+                pathAndNode.p1().through(pathAndNode.p2()));
+        if (paths.size() < mainElements.size()) {
+            return Stream.concat(
+                matches,
+                mainElements.subList(paths.size(), mainElements.size()).stream().map(element ->
+                    DeadEnd.deadEnd(element, trace))
+            );
+        }
+        if (paths.size() <= mainElements.size()) {
+            return matches;
+        }
+        return Stream.concat(
+            matches,
+            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path ->
+                path.through(null)));
+    }
+
     DefaultStructureMatcher(T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) {
         this.main = Objects.requireNonNull(main, "main");
         this.structure = Objects.requireNonNull(structure, "structure");
@@ -18,19 +44,16 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public boolean contains(T part) {
-        Stream<Pathway<T>> pathwayStream = pathsIn(part)
-            .flatMap(path ->
-                path.through(main));
+        Stream<? extends Search<T>> pathwayStream = pathsIn(part)
+            .flatMap(path -> path.through(main));
         return new PathsMatch<>(pathwayStream.toList()).matches();
     }
 
     private Stream<Path<T>> pathsIn(T part) {
         if (structure.isObject(part)) {
-            return structure.mapNamedFields(
-                part,
-                (name, subNode) ->
-                    pathsIn(subNode).map(path ->
-                        new Leg<>(name, path, structure)));
+            return structure.mapNamedFields(part, (name, subNode) ->
+                pathsIn(subNode).map(path ->
+                    new Leg<>(name, path, structure)));
         }
         if (structure.isArray(part)) {
             return navigate(structure.mapArrayElements(part, this::pathsIn));
@@ -40,7 +63,7 @@ record DefaultStructureMatcher<T>(
 
     private Stream<Path<T>> navigate(Stream<Path<T>> arrayParts) {
         return switch (arrayStrategy) {
-            case EXACT -> Stream.of(new Array<T>(arrayParts.toList(), structure));
+            case EXACT -> Stream.of(new ExactArray<T>(arrayParts.toList(), structure));
             case SUBSEQ -> Stream.of(new SubArray<T>(arrayParts.toList(), structure));
             case SUBSET -> arrayParts.map(path -> new Fork<T>(path, structure));
         };

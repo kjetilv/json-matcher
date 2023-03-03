@@ -212,6 +212,11 @@ class JsonMatcherTest {
             """
             { "foo": [ 1, 2, 3 ] }
             """);
+        assertNotPart(
+            matcher,
+            """
+            { "foo": [ 1, 2 ] }
+            """);
     }
 
     @Test

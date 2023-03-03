@@ -8,21 +8,21 @@ import java.util.stream.Stream;
 record SubArray<T>(List<Path<T>> paths, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Pathway<T>> through(T main, List<String> trace) {
+    public Stream<Search<T>> through(T main, List<String> trace) {
         List<T> mainElements = structure.arrayElements(main).toList();
         if (mainElements.size() < paths.size()) {
-            return Stream.of(Pathway.deadEnd(main, trace));
+            return Stream.of(DeadEnd.deadEnd(main, trace));
         }
         OptionalInt firstMatch = IntStream.range(0, mainElements.size())
             .filter(i ->
                 paths.get(0).through(mainElements.get(i))
-                    .allMatch(Pathway::found))
+                    .allMatch(Search::found))
             .findFirst();
         if (firstMatch.isEmpty()) {
-            return Stream.of(Pathway.deadEnd(main, trace));
+            return Stream.of(DeadEnd.deadEnd(main, trace));
         }
         List<T> subsequence = subsequence(firstMatch.getAsInt(), mainElements);
-        return Pathway.exactPaths(main, trace, subsequence, paths);
+        return DefaultStructureMatcher.exactPaths(main, trace, subsequence, paths);
     }
 
     private List<T> subsequence(int startIndex, List<T> nodes) {

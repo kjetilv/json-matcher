@@ -6,12 +6,14 @@ import java.util.stream.Stream;
 
 final class Zip {
 
-    static <X, Y> Stream<XY<X, Y>> of(List<X> xs, List<Y> ys) {
-        return IntStream.range(0, Math.min(xs.size(), ys.size())).mapToObj(i -> new XY<>(i, xs.get(i), ys.get(i)));
+    static <X, Y> Stream<Pair<X, Y>> of(List<X> p1s, List<Y> p2s) {
+        return IntStream.range(0, Math.min(p1s.size(), p2s.size()))
+            .mapToObj(index ->
+                new Pair<>(index, p1s.get(index), p2s.get(index)));
     }
 
     private Zip() {
     }
 
-    record XY<X, Y>(int i, X x, Y y) {}
+    record Pair<P1, P2>(int index, P1 p1, P2 p2) {}
 }
