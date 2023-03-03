@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 record SubArray<T>(List<Path<T>> paths, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Search<T>> through(T main, List<String> trace) {
+    public Stream<Search> through(T main, List<String> trace) {
         List<T> mainElements = structure.arrayElements(main).toList();
         if (mainElements.size() < paths.size()) {
             return Stream.of(DeadEnd.deadEnd(main, trace));

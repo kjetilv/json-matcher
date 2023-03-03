@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 record Destination<T>(T expected) implements Path<T> {
 
     @Override
-    public Stream<Search<T>> through(T main, List<String> trace) {
+    public Stream<Search> through(T main, List<String> trace) {
         return Optional.ofNullable(main)
             .filter(expected::equals)
             .map(equal ->
@@ -17,11 +17,11 @@ record Destination<T>(T expected) implements Path<T> {
             .stream();
     }
 
-    private static <T> Search<T> found(T expected, List<String> trace) {
+    private static <T> Search found(T expected, List<String> trace) {
         return new FoundLeaf<>(expected, trace);
     }
 
-    private static <T> Optional<Search<T>> unexpected(T main, T expected, List<String> trace) {
+    private static <T> Optional<Search> unexpected(T main, T expected, List<String> trace) {
         return Optional.of(new DeadEnd<>(main, expected, trace));
     }
 }

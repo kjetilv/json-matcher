@@ -9,7 +9,7 @@ import static com.github.kjetilv.json.DeadEnd.deadEnd;
 record Leg<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Search<T>> through(T main, List<String> trace) {
+    public Stream<Search> through(T main, List<String> trace) {
         return structure.get(main, name)
             .map(field ->
                 next.through(field, addTo(trace, name)))

@@ -6,9 +6,9 @@ import java.util.stream.Stream;
 sealed interface Path<T>
     permits Leg, SubArray, ExactArray, Destination, Fork {
 
-    default Stream<Search<T>> through(T main) {
+    default Stream<Search> through(T main) {
         return through(main, null);
     }
 
-    Stream<Search<T>> through(T main, List<String> trace);
+    Stream<Search> through(T main, List<String> trace);
 }

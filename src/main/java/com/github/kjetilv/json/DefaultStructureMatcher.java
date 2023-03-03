@@ -11,13 +11,13 @@ record DefaultStructureMatcher<T>(
 )
     implements StructureMatcher<T> {
 
-    static <T> Stream<Search<T>> exactPaths(
+    static <T> Stream<Search> exactPaths(
         T main,
         List<String> trace,
         List<T> mainElements,
         List<Path<T>> paths
     ) {
-        Stream<Search<T>> matches = Zip.of(paths, mainElements)
+        Stream<Search> matches = Zip.of(paths, mainElements)
             .flatMap((Zip.Pair<Path<T>, T> pathAndNode) ->
                 pathAndNode.p1().through(pathAndNode.p2()));
         if (paths.size() < mainElements.size()) {
@@ -44,7 +44,7 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public boolean contains(T part) {
-        Stream<? extends Search<T>> pathwayStream = pathsIn(part)
+        Stream<? extends Search> pathwayStream = pathsIn(part)
             .flatMap(path -> path.through(main));
         return new PathsMatch<>(pathwayStream.toList()).matches();
     }

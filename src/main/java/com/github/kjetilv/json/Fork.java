@@ -6,9 +6,9 @@ import java.util.stream.Stream;
 record Fork<T>(Path<T> path, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Search<T>> through(T main, List<String> trace) {
+    public Stream<Search> through(T main, List<String> trace) {
         Stream<T> mains = structure.arrayElements(main);
-        Search<T> pathway = mains.flatMap(node ->
+        Search pathway = mains.flatMap(node ->
                 path.through(node, trace))
             .filter(Search::found)
             .findFirst()
