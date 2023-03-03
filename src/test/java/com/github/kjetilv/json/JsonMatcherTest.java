@@ -135,6 +135,38 @@ class JsonMatcherTest {
     }
 
     @Test
+    void notPartFieldsDontMatchObject() {
+        assertNotPart(
+            StructureMatchers.node(
+                json(
+                    """
+                      {
+                      "arr": [
+                        {
+                        "foo": 1,
+                        "bar": 2
+                        },
+                        {
+                        "foo": 3,
+                        "bar": 4
+                        }
+                      ]
+                    }"""),
+                new JsonNodeStructure(),
+                StructureMatchers.ArrayStrategy.SUBSET),
+            """
+            {
+              "arr": [
+              {
+                "foo": 1,
+                "bar": 4
+              }
+              ]
+            }            
+            """);
+    }
+
+    @Test
     void isPartIfArrayIsSubset() {
         assertPart(
             subsetMatcher,
@@ -445,7 +477,7 @@ class JsonMatcherTest {
 
     private static void assertNotPart(StructureMatcher<JsonNode> matcher, String content) {
         assertThat(matcher.contains(json(content)))
-            .describedAs("Should not be part: " + content)
+            .describedAs("Should not be part of: " + matcher + "\n subset : " + content)
             .isFalse();
     }
 

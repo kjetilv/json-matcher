@@ -44,16 +44,23 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public boolean contains(T part) {
-        Stream<? extends Search> pathwayStream = pathsIn(part)
-            .flatMap(path -> path.through(main));
-        return new PathsMatch<>(pathwayStream.toList()).matches();
+        List<? extends Search> list = ((Stream<? extends Search>) pathsIn(part)
+            .flatMap(path -> path.through(main))).toList();
+        return new PathsMatch<>(list).matches();
+    }
+
+    @Override
+    public T subset(T part) {
+        return null;
     }
 
     private Stream<Path<T>> pathsIn(T part) {
         if (structure.isObject(part)) {
-            return structure.mapNamedFields(part, (name, subNode) ->
-                pathsIn(subNode).map(path ->
-                    new Leg<>(name, path, structure)));
+            return Stream.of(new Legs<>(
+                structure.mapNamedFields(part, (name, subNode) ->
+                        pathsIn(subNode).map(path ->
+                                new Leg<>(name, path, structure)))
+                    .toList(), structure));
         }
         if (structure.isArray(part)) {
             return navigate(structure.mapArrayElements(part, this::pathsIn));
