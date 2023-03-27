@@ -1,8 +1,11 @@
 package com.github.kjetilv.json;
 
+@FunctionalInterface
 public interface StructureMatcher<T> {
 
-    boolean contains(T part);
+    Match match(T part);
 
-    T subset(T part);
+    default boolean contains(T part) {
+        return match(part).matches();
+    }
 }

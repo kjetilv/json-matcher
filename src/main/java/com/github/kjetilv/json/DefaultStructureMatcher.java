@@ -2,18 +2,23 @@ package com.github.kjetilv.json;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 record DefaultStructureMatcher<T>(
-    T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) implements StructureMatcher<T> {
+    T main,
+    Structure<T> str,
+    StructureMatchers.ArrayStrategy arrayStrategy
+)
+    implements StructureMatcher<T>, StructureExtractor<T> {
 
-    static <T> Stream<Search> exactPaths(
-        T main, List<String> trace, List<T> mainElements, List<Path<T>> paths
+    static <T> Stream<Probe> exactPaths(
+        List<String> trace, List<T> mainElements, List<Path<T>> paths
     ) {
-        Stream<Search>
+        Stream<Probe>
             matches =
             Zip.of(paths, mainElements)
-                .flatMap((Zip.Pair<Path<T>, T> pathAndNode) -> pathAndNode.p1().through(pathAndNode.p2()));
+                .flatMap((Zip.Pair<Path<T>, T> pathAndNode) -> pathAndNode.p1().probe(pathAndNode.p2()));
         if (paths.size() < mainElements.size()) {
             return Stream.concat(
                 matches,
@@ -26,44 +31,48 @@ record DefaultStructureMatcher<T>(
         }
         return Stream.concat(
             matches,
-            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path -> path.through(null)));
+            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path -> path.probe(null)));
     }
 
-    DefaultStructureMatcher(T main, Structure<T> structure, StructureMatchers.ArrayStrategy arrayStrategy) {
+    DefaultStructureMatcher(T main, Structure<T> str, StructureMatchers.ArrayStrategy arrayStrategy) {
         this.main = Objects.requireNonNull(main, "main");
-        this.structure = Objects.requireNonNull(structure, "structure");
+        this.str = Objects.requireNonNull(str, "str");
         this.arrayStrategy = arrayStrategy == null ? StructureMatchers.ArrayStrategy.SUBSET : arrayStrategy;
     }
 
     @Override
-    public boolean contains(T part) {
-        return new PathsMatch<>(pathsIn(part).flatMap(path -> path.through(main)).toList()).matches();
+    public Match match(T part) {
+        return new PathsMatch<>(pathsIn(part).flatMap(path -> path.probe(main)).toList());
     }
 
     @Override
-    public T subset(T part) {
-        return null;
+    public Optional<T> subset(T mask) {
+        Stream<Path<T>> pathStream = pathsIn(mask);
+        return pathStream.map(path ->
+                path.extract(main))
+            .flatMap(Optional::stream)
+            .map(Extract::value)
+            .reduce(str::combine);
     }
 
     private Stream<Path<T>> pathsIn(T part) {
-        if (structure.isObject(part)) {
-            return Stream.of(new Legs<>(
-                structure.mapNamedFields(
+        if (str.isObject(part)) {
+            return Stream.of(new ExactObject<>(
+                str.mapNamedFields(
                     part,
-                    (name, subNode) -> pathsIn(subNode).map(path -> new Leg<>(name, path, structure))).toList(),
-                structure));
+                    (name, subNode) ->
+                        pathsIn(subNode).map(path ->
+                            new ObjectField<>(name, path, str))).toList(),
+                str));
         }
-        if (structure.isArray(part)) {
-            return navigate(structure.mapArrayElements(part, this::pathsIn));
+        if (str.isArray(part)) {
+            Stream<Path<T>> arrayParts = str.mapArrayElements(part, this::pathsIn);
+            return switch (arrayStrategy) {
+                case EXACT -> Stream.of(new ExactMatches<T>(arrayParts.toList(), str));
+                case SUBSEQ -> Stream.of(new Subsequence<T>(arrayParts.toList(), str));
+                case SUBSET -> arrayParts.map(path -> new Subset<T>(path, str));
+            };
         }
         return Stream.of(new Destination<>(part));
-    }
-
-    private Stream<Path<T>> navigate(Stream<Path<T>> arrayParts) {
-        return switch (arrayStrategy) {
-            case EXACT -> Stream.of(new ExactArray<T>(arrayParts.toList(), structure));
-            case SUBSEQ -> Stream.of(new SubArray<T>(arrayParts.toList(), structure));
-            case SUBSET -> arrayParts.map(path -> new Fork<T>(path, structure));
-        };
     }
 }

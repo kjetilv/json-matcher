@@ -2,7 +2,7 @@ package com.github.kjetilv.json;
 
 import java.util.List;
 
-record DeadEnd<T>(T main, T expected, List<String> trace) implements Search {
+record DeadEnd<T>(T main, T expected, List<String> trace) implements Probe {
 
     public static <T> DeadEnd<T> deadEnd(T expected, List<String> trace) {
         return new DeadEnd<>(null, expected, trace);

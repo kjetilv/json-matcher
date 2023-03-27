@@ -1,12 +1,16 @@
 package com.github.kjetilv.json;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface Structure<T> {
+
+    boolean isNull(T object);
 
     boolean isObject(T object);
 
@@ -16,7 +20,20 @@ public interface Structure<T> {
 
     Stream<T> arrayElements(T array);
 
+    default Map<String, T> fieldsMap(T object) {
+        return namedFields(object).collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue
+        ));
+    }
+
     Stream<Map.Entry<String, T>> namedFields(T object);
+
+    T toObject(Map<String, T> map);
+
+    T toArray(Collection<T> values);
+
+    T combine(T one, T two);
 
     default <R> Stream<R> map(
         T object,

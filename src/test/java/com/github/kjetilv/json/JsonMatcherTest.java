@@ -3,7 +3,6 @@ package com.github.kjetilv.json;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ class JsonMatcherTest {
 
     @BeforeEach
     void setUp() {
-        JsonNode json = json(JSON);
+        JsonNode json = JsonDings.json(JSON);
         subsetMatcher = StructureMatchers.node(
             json,
             new JsonNodeStructure(),
@@ -124,21 +123,23 @@ class JsonMatcherTest {
                 }
               }
             }
-            """);
+            """
+        );
         assertNotPart(
             subsetMatcher,
             """
             {
               "arr2": { "itsATrick": true, "reaction": "dip" }
             }
-            """);
+            """
+        );
     }
 
     @Test
     void notPartFieldsDontMatchObject() {
         assertNotPart(
             StructureMatchers.node(
-                json(
+                JsonDings.json(
                     """
                       {
                       "arr": [
@@ -206,7 +207,7 @@ class JsonMatcherTest {
     @Test
     void isNotPartIfArrayIsNotExactMatch() {
         StructureMatcher<JsonNode> matcher = StructureMatchers.node(
-            json(
+            JsonDings.json(
                 """
                 {
                   "foo": [ 1, 2, 3 ]
@@ -254,7 +255,7 @@ class JsonMatcherTest {
     @Test
     void isNotPartIfArrayIsNotSubsequence() {
         StructureMatcher<JsonNode> matcher = StructureMatchers.node(
-            json(
+            JsonDings.json(
                 """
                 {
                   "foo": [ 1, 2, 3, 4, 5 ]
@@ -473,25 +474,15 @@ class JsonMatcherTest {
         }
         """;
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private static void assertNotPart(StructureMatcher<JsonNode> matcher, String content) {
-        assertThat(matcher.contains(json(content)))
+        assertThat(matcher.contains(JsonDings.json(content)))
             .describedAs("Should not be part of: " + matcher + "\n subset : " + content)
             .isFalse();
     }
 
     private static void assertPart(StructureMatcher<JsonNode> matcher, String content) {
-        assertThat(matcher.contains(json(content)))
+        assertThat(matcher.contains(JsonDings.json(content)))
             .describedAs("Should be a part: " + content)
             .isTrue();
-    }
-
-    private static JsonNode json(String content) {
-        try {
-            return OBJECT_MAPPER.readTree(content);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse: " + content, e);
-        }
     }
 }

@@ -2,19 +2,25 @@ package com.github.kjetilv.json;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.github.kjetilv.json.DeadEnd.deadEnd;
 
-record Leg<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
+record ObjectField<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Search> through(T main, List<String> trace) {
+    public Stream<Probe> probe(T main, List<String> trace) {
         return structure.get(main, name)
             .map(field ->
-                next.through(field, addTo(trace, name)))
+                next.probe(field, addTo(trace, name)))
             .orElseGet(() ->
                 Stream.of(deadEnd(main, trace)));
+    }
+
+    @Override
+    public Optional<Extract<T>> extract(T main) {
+        return structure.get(main, name).flatMap(next::extract);
     }
 
     private static List<String> addTo(List<String> list, String added) {
