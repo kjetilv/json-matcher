@@ -12,7 +12,7 @@ record ExactObject<T>(List<ObjectField<T>> objectFields, Structure<T> structure)
     @Override
     public Stream<Probe> probe(T main, List<String> trace) {
         return Stream.of(
-            new FoundNode<>(
+            new FoundNode(
                 objectFields.stream().flatMap(objectField ->
                         objectField.probe(main, trace))
                     .toList(),

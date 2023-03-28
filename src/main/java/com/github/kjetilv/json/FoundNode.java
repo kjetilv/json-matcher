@@ -3,7 +3,7 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-record FoundNode<T>(List<Probe> branches, List<String> trace) implements Probe {
+record FoundNode(List<Probe> branches, List<String> trace) implements Probe {
 
     @Override
     public Rate successRate() {
