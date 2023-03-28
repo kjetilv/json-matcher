@@ -2,6 +2,7 @@ package com.github.kjetilv.json;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -89,7 +90,11 @@ public final class MapsStructure implements Structure<Object> {
                     Map.entry(key, combine(oneMap.get(key), twoMap.get(key))))
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
-                    Map.Entry::getValue
+                    Map.Entry::getValue,
+                    (o1, o2) -> {
+                        throw new IllegalStateException("Shared values: " + o1 + " / " + o2);
+                    },
+                    LinkedHashMap::new
                 ));
         }
         throw new IllegalStateException("Unknown data: " + one + " /" + two);

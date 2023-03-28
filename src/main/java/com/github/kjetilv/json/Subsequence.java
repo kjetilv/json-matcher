@@ -21,7 +21,7 @@ record Subsequence<T>(List<Path<T>> paths, Structure<T> structure) implements Pa
         }
         OptionalInt firstMatch = IntStream.range(0, mainElements.size())
             .filter(i ->
-                paths.get(0).probe(mainElements.get(i))
+                paths.get(0).probe(mainElements.get(i), trace)
                     .allMatch(Probe::found))
             .findFirst();
         if (firstMatch.isEmpty()) {

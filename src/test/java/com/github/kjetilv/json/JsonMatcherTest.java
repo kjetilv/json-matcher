@@ -163,7 +163,7 @@ class JsonMatcherTest {
                 "bar": 4
               }
               ]
-            }            
+            }
             """);
     }
 

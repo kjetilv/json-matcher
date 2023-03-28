@@ -27,6 +27,6 @@ record Destination<T>(T expected) implements Path<T> {
     }
 
     private static <T> Optional<Probe> unexpected(T main, T expected, List<String> trace) {
-        return Optional.of(new DeadEnd<>(main, expected, trace));
+        return Optional.of(new DeadEnd<>(trace, main, expected));
     }
 }

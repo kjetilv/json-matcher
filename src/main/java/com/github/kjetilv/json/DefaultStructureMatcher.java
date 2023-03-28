@@ -15,23 +15,27 @@ record DefaultStructureMatcher<T>(
     static <T> Stream<Probe> exactPaths(
         List<String> trace, List<T> mainElements, List<Path<T>> paths
     ) {
-        Stream<Probe>
-            matches =
-            Zip.of(paths, mainElements)
-                .flatMap((Zip.Pair<Path<T>, T> pathAndNode) -> pathAndNode.p1().probe(pathAndNode.p2()));
         if (paths.size() < mainElements.size()) {
             return Stream.concat(
-                matches,
+                matches(mainElements, paths, trace),
                 mainElements.subList(paths.size(), mainElements.size())
                     .stream()
-                    .map(element -> DeadEnd.deadEnd(element, trace)));
+                    .map(element ->
+                        DeadEnd.deadEnd(element, trace)));
         }
         if (paths.size() <= mainElements.size()) {
-            return matches;
+            return matches(mainElements, paths, trace);
         }
         return Stream.concat(
-            matches,
-            paths.subList(mainElements.size(), paths.size()).stream().flatMap(path -> path.probe(null)));
+            matches(mainElements, paths, trace),
+            paths.subList(mainElements.size(), paths.size()).stream()
+                .flatMap(path ->
+                    path.probe(null, trace)));
+    }
+
+    private static <T> Stream<Probe> matches(List<T> mainElements, List<Path<T>> paths, List<String> trace) {
+        return Zip.of(paths, mainElements).flatMap(pathAndNode ->
+            pathAndNode.p1().probe(pathAndNode.p2(), trace));
     }
 
     DefaultStructureMatcher(T main, Structure<T> str, StructureMatchers.ArrayStrategy arrayStrategy) {

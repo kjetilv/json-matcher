@@ -1,6 +1,7 @@
 package com.github.kjetilv.json;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public interface Probe {
 
@@ -11,4 +12,8 @@ public interface Probe {
     Rate successRate();
 
     List<String> trace();
+
+    default Stream<Probe> leaves() {
+        return Stream.of(this);
+    }
 }

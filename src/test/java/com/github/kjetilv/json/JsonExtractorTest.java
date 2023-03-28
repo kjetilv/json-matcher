@@ -1,9 +1,6 @@
 package com.github.kjetilv.json;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,9 +24,8 @@ public class JsonExtractorTest {
               "qos": 1.5
             }
             """);
-        DefaultStructureMatcher<JsonNode> structureMatcher =
-            matcher(main);
 
+        DefaultStructureMatcher<JsonNode> structureMatcher = matcher(main);
         StructureExtractor<JsonNode> extractor = structureMatcher;
         StructureMatcher<JsonNode> matcher = structureMatcher;
 
@@ -37,8 +33,10 @@ public class JsonExtractorTest {
             """
             {
               "foo": {
-                "bar": 43,
-                "arrs": [{"key": "a", "val": 2}]
+                "bar": {
+                  "zot": 43,
+                  "arrs": ["x"]
+                }
               },
               "qos": []
             }
@@ -47,7 +45,14 @@ public class JsonExtractorTest {
         assertThat(extractor.subset(mask)).hasValueSatisfying(subset -> {
             assertThat(matcher.contains(subset));
             Match match = matcher(subset).match(mask);
+            System.out.println("\nPathways\n");
             match.pathways().forEach(System.out::println);
+            System.out.println("\nJSON\n");
+            System.out.println(main);
+            System.out.println(subset);
+            System.out.println(mask);
+            System.out.println("\nLeaves\n");
+            match.leaves().forEach(System.out::println);
         });
     }
 

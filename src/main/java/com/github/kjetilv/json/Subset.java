@@ -15,7 +15,7 @@ record Subset<T>(Path<T> path, Structure<T> structure) implements Path<T> {
             .filter(Probe::found)
             .findFirst()
             .orElseGet(() ->
-                new DeadEnd<>(main, null, trace)));
+                new DeadEnd<>(trace, main, null)));
     }
 
     @Override

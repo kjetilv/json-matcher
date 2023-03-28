@@ -1,6 +1,7 @@
 package com.github.kjetilv.json;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 record FoundNode<T>(List<Probe> branches, List<String> trace) implements Probe {
 
@@ -13,5 +14,17 @@ record FoundNode<T>(List<Probe> branches, List<String> trace) implements Probe {
         return new Rate(
             Math.toIntExact(count),
             branches.size());
+    }
+
+    @Override
+    public Stream<Probe> leaves() {
+        return branches.stream().flatMap(Probe::leaves);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" +
+               (trace == null || trace.isEmpty() ? "/" : String.join("/", trace)) + " " + branches +
+               "]";
     }
 }
