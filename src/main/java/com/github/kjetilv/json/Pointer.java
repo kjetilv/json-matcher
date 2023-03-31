@@ -9,18 +9,13 @@ import java.util.stream.Stream;
 
 public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
 
-    @SuppressWarnings({ "ComparatorMethodParameterNotUsed", "NullableProblems" })
-    @Override
-    default int compareTo(Pointer<T> o) {
-        return -1;
-    }
-
     Optional<T> get(T main);
 
     Object map(Object leaf);
 
     record Node<T>(String name, Pointer<T> next, Structure<T> structure) implements Pointer<T>, NameChain {
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Pointer<T> pointer) {
             return NameChain.compare(this, pointer);
@@ -52,18 +47,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
 
     record Array<T>(int index, Pointer<T> elem, Structure<T> structure) implements Pointer<T>, NameChain {
 
-        @Override
-        public Object map(Object leaf) {
-            List<Object> list = new ArrayList<>(index + 1);
-            if (index > 0) {
-                for (int i = 0; i < index; i++) {
-                    list.add(null);
-                }
-            }
-            list.add(elem.map(leaf));
-            return list;
-        }
-
+        @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Pointer<T> pointer) {
             if (pointer instanceof Pointer.Array<T> array) {
@@ -78,6 +62,18 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
                 .skip(index)
                 .findFirst()
                 .flatMap(elem::get);
+        }
+
+        @Override
+        public Object map(Object leaf) {
+            List<Object> list = new ArrayList<>(index + 1);
+            if (index > 0) {
+                for (int i = 0; i < index; i++) {
+                    list.add(null);
+                }
+            }
+            list.add(elem.map(leaf));
+            return list;
         }
 
         @Override
@@ -104,6 +100,12 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         @Override
         public Object map(Object leaf) {
             return leaf;
+        }
+
+        @SuppressWarnings({ "ComparatorMethodParameterNotUsed", "NullableProblems" })
+        @Override
+        public int compareTo(Pointer<T> pointer) {
+            return -1;
         }
 
         @Override
