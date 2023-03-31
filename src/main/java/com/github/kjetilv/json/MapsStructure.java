@@ -1,11 +1,8 @@
 package com.github.kjetilv.json;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -57,13 +54,8 @@ public final class MapsStructure implements Structure<Object> {
     }
 
     @Override
-    public Object toObject(Map<String, Object> map) {
+    public Object toObject(Map<String, ?> map) {
         return map;
-    }
-
-    @Override
-    public Object toArray(Collection<Object> values) {
-        return values;
     }
 
     @Override
@@ -75,27 +67,8 @@ public final class MapsStructure implements Structure<Object> {
             return one;
         }
         boolean reconcilable = isArray(one) == isArray(two);
-        if (isArray(one)) {
-            return Stream.concat(
-                arrayElements(one),
-                arrayElements(two)
-            ).toList();
-        }
-        if (isObject(one)) {
-            Map<String, Object> oneMap = fieldsMap(one);
-            Map<String, Object> twoMap = fieldsMap(two);
-
-            return Stream.concat(oneMap.keySet().stream(), twoMap.keySet().stream())
-                .map(key ->
-                    Map.entry(key, combine(oneMap.get(key), twoMap.get(key))))
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (o1, o2) -> {
-                        throw new IllegalStateException("Shared values: " + o1 + " / " + o2);
-                    },
-                    LinkedHashMap::new
-                ));
+        if (reconcilable) {
+            return Maps.combine(one, two);
         }
         throw new IllegalStateException("Unknown data: " + one + " /" + two);
     }

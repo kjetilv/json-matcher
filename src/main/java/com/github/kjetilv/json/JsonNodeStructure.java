@@ -1,7 +1,6 @@
 package com.github.kjetilv.json;
 
-import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -10,9 +9,6 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public final class JsonNodeStructure implements Structure<JsonNode> {
 
@@ -54,31 +50,28 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
     }
 
     @Override
-    public JsonNode toObject(Map<String, JsonNode> map) {
-        ObjectNode node = FACTORY.objectNode();
-        map.forEach(node::set);
-        return node;
-    }
-
-    @Override
-    public JsonNode toArray(Collection<JsonNode> values) {
-        ArrayNode node = FACTORY.arrayNode();
-        values.forEach(node::add);
-        return node;
+    public JsonNode toObject(Map<String, ?> map) {
+        return OBJECT_MAPPER.convertValue(map, JsonNode.class);
     }
 
     @Override
     public JsonNode combine(JsonNode one, JsonNode two) {
-        try {
-            return OBJECT_MAPPER.readerForUpdating(one).readValue(two);
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not combine: " + one + " / " + two, e);
+        if (isObject(one) && isObject(two)) {
+            Map<?, ?> mapOne = OBJECT_MAPPER.convertValue(one, Map.class);
+            Map<?, ?> mapTwo = OBJECT_MAPPER.convertValue(two, Map.class);
+            Map<?, ?> combine = Maps.combine(mapOne, mapTwo);
+            return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
         }
+        if (isArray(one) && isArray(two)) {
+            List<?> listOne = OBJECT_MAPPER.convertValue(one, List.class);
+            List<?> listTwo = OBJECT_MAPPER.convertValue(two, List.class);
+            List<?> combine = Maps.combine(listOne, listTwo);
+            return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
+        }
+        throw new IllegalStateException("Could not combine: " + one + " / " + two);
     }
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    private static final JsonNodeFactory FACTORY = new JsonNodeFactory(true);
 
     private static Predicate<JsonNode> notNull() {
         return node -> !node.isNull();

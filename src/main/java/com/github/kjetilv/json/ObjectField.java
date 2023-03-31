@@ -10,7 +10,7 @@ import static com.github.kjetilv.json.DeadEnd.deadEnd;
 record ObjectField<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Probe> probe(T main, List<String> trace) {
+    public Stream<Probe<T>> probe(T main, List<String> trace) {
         return structure.get(main, name)
             .map(field ->
                 next.probe(field, addTo(trace, name)))

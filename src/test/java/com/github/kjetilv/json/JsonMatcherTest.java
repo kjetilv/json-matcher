@@ -19,14 +19,14 @@ class JsonMatcherTest {
     @BeforeEach
     void setUp() {
         JsonNode json = JsonDings.json(JSON);
-        subsetMatcher = StructureMatchers.node(
+        subsetMatcher = Structures.matcher(
             json,
             new JsonNodeStructure(),
-            StructureMatchers.ArrayStrategy.SUBSET);
-        exactMatcher = StructureMatchers.node(
+            Structures.ArrayStrategy.SUBSET);
+        exactMatcher = Structures.matcher(
             json,
             new JsonNodeStructure(),
-            StructureMatchers.ArrayStrategy.EXACT);
+            Structures.ArrayStrategy.EXACT);
     }
 
     @AfterEach
@@ -138,7 +138,7 @@ class JsonMatcherTest {
     @Test
     void notPartFieldsDontMatchObject() {
         assertNotPart(
-            StructureMatchers.node(
+            Structures.matcher(
                 JsonDings.json(
                     """
                       {
@@ -154,7 +154,7 @@ class JsonMatcherTest {
                       ]
                     }"""),
                 new JsonNodeStructure(),
-                StructureMatchers.ArrayStrategy.SUBSET),
+                Structures.ArrayStrategy.SUBSET),
             """
             {
               "arr": [
@@ -206,7 +206,7 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotExactMatch() {
-        StructureMatcher<JsonNode> matcher = StructureMatchers.node(
+        StructureMatcher<JsonNode> matcher = Structures.matcher(
             JsonDings.json(
                 """
                 {
@@ -214,7 +214,7 @@ class JsonMatcherTest {
                 }
                 """),
             new JsonNodeStructure(),
-            StructureMatchers.ArrayStrategy.EXACT);
+            Structures.ArrayStrategy.EXACT);
         assertNotPart(
             matcher,
             """
@@ -254,7 +254,7 @@ class JsonMatcherTest {
 
     @Test
     void isNotPartIfArrayIsNotSubsequence() {
-        StructureMatcher<JsonNode> matcher = StructureMatchers.node(
+        StructureMatcher<JsonNode> matcher = Structures.matcher(
             JsonDings.json(
                 """
                 {
@@ -262,7 +262,7 @@ class JsonMatcherTest {
                 }
                 """),
             new JsonNodeStructure(),
-            StructureMatchers.ArrayStrategy.SUBSEQ);
+            Structures.ArrayStrategy.SUBSEQ);
         assertNotPart(
             matcher,
             """

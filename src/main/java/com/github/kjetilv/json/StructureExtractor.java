@@ -4,5 +4,5 @@ import java.util.Optional;
 
 public interface StructureExtractor<T> {
 
-    Optional<T> subset(T mask);
+    Optional<T> extract(T mask);
 }

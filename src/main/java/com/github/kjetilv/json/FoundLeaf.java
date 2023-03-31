@@ -2,7 +2,7 @@ package com.github.kjetilv.json;
 
 import java.util.List;
 
-record FoundLeaf<T>(T main, List<String> trace) implements Probe {
+record FoundLeaf<T>(T main, List<String> trace) implements EndProbe<T> {
 
     @Override
     public Rate successRate() {

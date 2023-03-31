@@ -10,9 +10,9 @@ import java.util.stream.Stream;
 record ExactObject<T>(List<ObjectField<T>> objectFields, Structure<T> structure) implements Path<T> {
 
     @Override
-    public Stream<Probe> probe(T main, List<String> trace) {
+    public Stream<Probe<T>> probe(T main, List<String> trace) {
         return Stream.of(
-            new FoundNode(
+            new FoundNode<T>(
                 objectFields.stream().flatMap(objectField ->
                         objectField.probe(main, trace))
                     .toList(),
@@ -30,11 +30,15 @@ record ExactObject<T>(List<ObjectField<T>> objectFields, Structure<T> structure)
                     Map.Entry::getKey,
                     Map.Entry::getValue,
                     (t1, t2) -> {
+                        if (t1.equals(t2)) {
+                            return t1;
+                        }
                         throw new IllegalStateException("Failed to combine: " + t1 + " / " + t2);
                     },
                     LinkedHashMap::new
                 )))
-            .filter(map1 -> !map1.isEmpty())
+            .filter(map ->
+                !map.isEmpty())
             .map(map ->
                 () -> structure.toObject(map));
     }

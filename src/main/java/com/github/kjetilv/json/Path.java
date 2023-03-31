@@ -7,11 +7,11 @@ import java.util.stream.Stream;
 sealed interface Path<T>
     permits Destination, ExactMatches, Subset, ExactObject, ObjectField, Subsequence {
 
-    default Stream<Probe> probe(T main) {
+    default Stream<Probe<T>> probe(T main) {
         return probe(main, null);
     }
 
-    Stream<Probe> probe(T main, List<String> trace);
+    Stream<Probe<T>> probe(T main, List<String> trace);
 
     Optional<Extract<T>> extract(T main);
 }

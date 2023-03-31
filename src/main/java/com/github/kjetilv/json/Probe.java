@@ -3,7 +3,7 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-public interface Probe {
+public interface Probe<T> {
 
     default boolean found() {
         return successRate().is100Percent();
@@ -13,7 +13,5 @@ public interface Probe {
 
     List<String> trace();
 
-    default Stream<Probe> leaves() {
-        return Stream.of(this);
-    }
+    Stream<EndProbe<T>> leaves();
 }

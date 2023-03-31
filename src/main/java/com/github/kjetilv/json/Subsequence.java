@@ -14,7 +14,7 @@ record Subsequence<T>(List<Path<T>> paths, Structure<T> structure) implements Pa
     }
 
     @Override
-    public Stream<Probe> probe(T main, List<String> trace) {
+    public Stream<Probe<T>> probe(T main, List<String> trace) {
         List<T> mainElements = structure.arrayElements(main).toList();
         if (mainElements.size() < paths.size()) {
             return Stream.of(DeadEnd.deadEnd(main, trace));
