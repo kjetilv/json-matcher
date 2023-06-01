@@ -1,11 +1,6 @@
 package com.github.kjetilv.json;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,16 +21,19 @@ record DefaultStructureMatcher<T>(
                 mainElements.subList(paths.size(), mainElements.size())
                     .stream()
                     .map(element ->
-                        DeadEnd.deadEnd(element, trace)));
+                        DeadEnd.deadEnd(element, trace))
+            );
         }
         if (paths.size() <= mainElements.size()) {
             return matches(mainElements, paths, trace);
         }
         return Stream.concat(
             matches(mainElements, paths, trace),
-            paths.subList(mainElements.size(), paths.size()).stream()
+            paths.subList(mainElements.size(), paths.size())
+                .stream()
                 .flatMap(path ->
-                    path.probe(null, trace)));
+                    path.probe(null, trace))
+        );
     }
 
     DefaultStructureMatcher(T main, Structure<T> str, Structures.ArrayStrategy arr) {
@@ -47,7 +45,8 @@ record DefaultStructureMatcher<T>(
     @Override
     public Match<T> match(T part) {
         return new PathsMatch<>(pathsIn(part).flatMap(path ->
-            path.probe(main)).toList());
+                path.probe(main))
+            .toList());
     }
 
     @Override
@@ -72,7 +71,8 @@ record DefaultStructureMatcher<T>(
                     .map(value ->
                         new Diff<>(value, pointer.get(main).orElse(null)))))
             .filter(entry ->
-                entry.getValue().filter(Diff::isDiff).isPresent())
+                entry.getValue()
+                    .filter(Diff::isDiff).isPresent())
             .map(entry ->
                 Map.entry(entry.getKey(), entry.getValue().get()))
             .collect(Collectors.toMap(
@@ -92,7 +92,11 @@ record DefaultStructureMatcher<T>(
 
         List<Object>
             list =
-            subdiff.entrySet().stream().map(entry -> entry.getKey().map(entry.getValue().found())).toList();
+            subdiff.entrySet()
+                .stream()
+                .map(entry -> entry.getKey()
+                    .map(entry.getValue().found()))
+                .toList();
 
         return (Optional<T>) list.stream().reduce(Maps::combine)
             .map(Map.class::cast)
@@ -125,23 +129,31 @@ record DefaultStructureMatcher<T>(
     private Stream<Path<T>> pathsIn(T part) {
         if (str.isObject(part)) {
             List<ObjectField<T>> objectFields = str.mapNamedFields(part, (name, subpart) ->
-                pathsIn(subpart).map(path ->
-                    new ObjectField<>(name, path, str))).toList();
+                    pathsIn(subpart).map(path ->
+                        new ObjectField<>(name, path, str)))
+                .toList();
             return Stream.of(new ExactObject<>(objectFields, str));
         }
         if (str.isArray(part)) {
             Stream<Path<T>> arrayParts = str.mapArrayElements(part, this::pathsIn);
             return switch (arr) {
-                case EXACT -> Stream.of(new ExactMatches<T>(arrayParts.toList(), str));
-                case SUBSEQ -> Stream.of(new Subsequence<T>(arrayParts.toList(), str));
+                case EXACT -> Stream.of(new ExactMatches<>(arrayParts.toList(), str));
+                case SUBSEQ -> Stream.of(new Subsequence<>(arrayParts.toList(), str));
                 case SUBSET -> arrayParts.map(path -> new Subset<T>(path, str));
             };
         }
         return Stream.of(new Destination<>(part));
     }
 
+    private static final Pointer.Leaf<?> EMPTY_LEAF = new Pointer.Leaf<>();
+
     private static <T> Stream<Pointer<T>> empty() {
-        return Stream.of(new Pointer.Leaf<>());
+        return Stream.of(emptyLeaf());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> Pointer.Leaf<T> emptyLeaf() {
+        return (Pointer.Leaf<T>) EMPTY_LEAF;
     }
 
     private static <T> Stream<Probe<T>> matches(List<T> mainElements, List<Path<T>> paths, List<String> trace) {
