@@ -86,9 +86,7 @@ public class JsonExtractorTest {
         subdiff.forEach((jsonNodePointer, jsonNodeDiff) ->
             System.out.println(jsonNodePointer + " -> " + jsonNodeDiff));
 
-        assertThat(differ.diff(mask)).hasValueSatisfying(diff -> {
-            System.out.println(diff);
-        });
+        assertThat(differ.diff(mask)).hasValueSatisfying(System.out::println);
     }
 
     private static StructureExtractor<JsonNode> extractor(JsonNode main) {

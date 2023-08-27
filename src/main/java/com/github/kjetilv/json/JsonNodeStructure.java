@@ -1,14 +1,14 @@
 package com.github.kjetilv.json;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JsonNodeStructure implements Structure<JsonNode> {
 
@@ -46,7 +46,9 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
 
     @Override
     public Stream<Map.Entry<String, JsonNode>> namedFields(JsonNode object) {
-        return isNull(object) ? Stream.empty() : stream(object::fields);
+        return isNull(object)
+            ? Stream.empty()
+            : stream(object::fields);
     }
 
     @Override
@@ -59,16 +61,21 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
         if (isObject(one) && isObject(two)) {
             Map<?, ?> mapOne = OBJECT_MAPPER.convertValue(one, Map.class);
             Map<?, ?> mapTwo = OBJECT_MAPPER.convertValue(two, Map.class);
-            Map<?, ?> combine = Maps.combine(mapOne, mapTwo);
+            Map<?, ?> combine = Utils.combine(mapOne, mapTwo);
             return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
         }
         if (isArray(one) && isArray(two)) {
             List<?> listOne = OBJECT_MAPPER.convertValue(one, List.class);
             List<?> listTwo = OBJECT_MAPPER.convertValue(two, List.class);
-            List<?> combine = Maps.combine(listOne, listTwo);
+            List<?> combine = Utils.combine(listOne, listTwo);
             return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
         }
         throw new IllegalStateException("Could not combine: " + one + " / " + two);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[]";
     }
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -81,10 +88,5 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
         return elements != null && elements.iterator().hasNext()
             ? StreamSupport.stream(elements.spliterator(), false)
             : Stream.empty();
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "[]";
     }
 }

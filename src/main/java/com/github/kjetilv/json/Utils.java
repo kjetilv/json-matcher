@@ -1,19 +1,11 @@
 package com.github.kjetilv.json;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-final class Maps {
-
-    private Maps() {
-
-    }
+final class Utils {
 
     static Object combine(Object one, Object two) {
         if (Objects.equals(one, two)) {
@@ -25,7 +17,7 @@ final class Maps {
         if (two == null) {
             return one;
         }
-        if (one instanceof Map<?,?> mapOne && two instanceof Map<?, ?> mapTwo) {
+        if (one instanceof Map<?, ?> mapOne && two instanceof Map<?, ?> mapTwo) {
             return combine(mapOne, mapTwo);
         }
         if (one instanceof List<?> collOne && two instanceof List<?> collTwo) {
@@ -41,15 +33,14 @@ final class Maps {
         if (two == null || two.isEmpty()) {
             return one;
         }
-        return Stream.concat(one.keySet().stream(), two.keySet().stream())
-            .map(key ->
-                Map.entry(key, combine(one.get(key), two.get(key))))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                Maps::combine,
-                LinkedHashMap::new
-            ));
+        return toMap(
+            Stream.of(one, two)
+                .map(Map::keySet)
+                .flatMap(Collection::stream)
+                .map(key ->
+                    Map.entry(key, combine(one.get(key), two.get(key)))),
+            Utils::combine
+        );
     }
 
     static List<?> combine(List<?> one, List<?> two) {
@@ -70,5 +61,32 @@ final class Maps {
             ));
         }
         return list;
+    }
+
+    static <K, V> Map<K, V> toMap(Stream<Map.Entry<K, V>> entryStream) {
+        return toMap(entryStream, null);
+    }
+
+    private Utils() {
+
+    }
+
+    private static <K, V> LinkedHashMap<K, V> toMap(
+        Stream<Map.Entry<K, V>> entryStream,
+        BinaryOperator<V> mergeFunction
+    ) {
+        return entryStream.collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            mergeFunction == null ? Utils::noCombine : mergeFunction,
+            LinkedHashMap::new
+        ));
+    }
+
+    private static <V> V noCombine(V o1, V o2) {
+        if (o1.equals(o2)) {
+            return o1;
+        }
+        throw new IllegalStateException("Cannot combine: " + o1 + " / " + o2);
     }
 }

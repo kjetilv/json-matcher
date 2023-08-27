@@ -68,7 +68,7 @@ public final class MapsStructure implements Structure<Object> {
         }
         boolean reconcilable = isArray(one) == isArray(two);
         if (reconcilable) {
-            return Maps.combine(one, two);
+            return Utils.combine(one, two);
         }
         throw new IllegalStateException("Unknown data: " + one + " /" + two);
     }

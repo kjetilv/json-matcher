@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -18,7 +19,11 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Pointer<T> pointer) {
-            return NameChain.compare(this, pointer);
+            if (pointer instanceof NameChain otherChain) {
+                return get().collect(Collectors.joining("/"))
+                    .compareTo(otherChain.get().collect(Collectors.joining("/")));
+            }
+            return 1;
         }
 
         @Override
@@ -32,10 +37,10 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         }
 
         @Override
-        public Stream<String> stream() {
+        public Stream<String> get() {
             return Stream.concat(
                 Stream.of(name()),
-                next() instanceof NameChain node ? node.stream() : Stream.empty()
+                next() instanceof NameChain nameChain ? nameChain.get() : Stream.empty()
             );
         }
 
@@ -77,10 +82,10 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         }
 
         @Override
-        public Stream<String> stream() {
+        public Stream<String> get() {
             return Stream.concat(
                 IntStream.of(index).mapToObj(Integer::toString),
-                elem instanceof NameChain nameChain ? nameChain.stream() : Stream.empty()
+                elem instanceof NameChain nameChain ? nameChain.get() : Stream.empty()
             );
         }
 

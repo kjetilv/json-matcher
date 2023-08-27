@@ -7,7 +7,7 @@ record FoundNode<T>(List<Probe<T>> branches, List<String> trace) implements Prob
 
     @Override
     public Rate successRate() {
-        if (branches.size() == 0) {
+        if (branches.isEmpty()) {
             return Rate.SUCCESS;
         }
         long count = branches.stream().filter(Probe::found).count();

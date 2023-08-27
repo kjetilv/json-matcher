@@ -2,7 +2,7 @@ package com.github.kjetilv.json;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 record DefaultStructureMatcher<T>(
@@ -64,7 +64,7 @@ record DefaultStructureMatcher<T>(
         List<Pointer<T>> pointers = pointersIn(subset)
             .sorted(Comparator.naturalOrder())
             .toList();
-        return pointers.stream()
+        return Utils.toMap(pointers.stream()
             .map(pointer ->
                 Map.entry(pointer, pointer.get(subset)
                     .filter(value -> !str.isNull(value))
@@ -74,15 +74,7 @@ record DefaultStructureMatcher<T>(
                 entry.getValue()
                     .filter(Diff::isDiff).isPresent())
             .map(entry ->
-                Map.entry(entry.getKey(), entry.getValue().get()))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (o1, o2) -> {
-                    throw new IllegalStateException("Cannot combine: " + o1 + " / " + o2);
-                },
-                LinkedHashMap::new
-            ));
+                Map.entry(entry.getKey(), entry.getValue().get())));
     }
 
     @SuppressWarnings("unchecked")
@@ -98,7 +90,7 @@ record DefaultStructureMatcher<T>(
                     .map(entry.getValue().found()))
                 .toList();
 
-        return (Optional<T>) list.stream().reduce(Maps::combine)
+        return (Optional<T>) list.stream().reduce(Utils::combine)
             .map(Map.class::cast)
             .map(diff ->
                 str.toObject(diff));
@@ -110,39 +102,51 @@ record DefaultStructureMatcher<T>(
                 return empty();
             }
             return str.mapNamedFields(part, (name, subpart) ->
-                pointersIn(subpart).map(pointer -> new Pointer.Node<>(name, pointer, str)));
+                pointersIn(subpart).map(pointer ->
+                    new Pointer.Node<>(name, pointer, str)));
         }
         if (str.isArray(part)) {
             if (str.arrayElements(part).findAny().isEmpty()) {
                 return empty();
             }
             AtomicInteger index = new AtomicInteger();
-            return str.mapArrayElements(part, element -> {
-                int i = index.getAndIncrement();
-                return pointersIn(element).map(pointer ->
-                    new Pointer.Array<>(i, pointer, str));
-            });
+            Supplier<Integer> nextIndex = index::getAndIncrement;
+            return str.mapArrayElements(part, element ->
+                pointersIn(element).map(pointer ->
+                    new Pointer.Array<>(nextIndex.get(), pointer, str)));
         }
         return empty();
     }
 
     private Stream<Path<T>> pathsIn(T part) {
         if (str.isObject(part)) {
-            List<ObjectField<T>> objectFields = str.mapNamedFields(part, (name, subpart) ->
+            List<Path.ObjectField<T>> objectFields = str.mapNamedFields(part, (name, subpart) ->
                     pathsIn(subpart).map(path ->
-                        new ObjectField<>(name, path, str)))
+                        new Path.ObjectField<>(name, path, str)))
                 .toList();
-            return Stream.of(new ExactObject<>(objectFields, str));
+            return Stream.of(new Path.ExactObject<>(objectFields, str));
         }
         if (str.isArray(part)) {
             Stream<Path<T>> arrayParts = str.mapArrayElements(part, this::pathsIn);
             return switch (arr) {
-                case EXACT -> Stream.of(new ExactMatches<>(arrayParts.toList(), str));
-                case SUBSEQ -> Stream.of(new Subsequence<>(arrayParts.toList(), str));
-                case SUBSET -> arrayParts.map(path -> new Subset<T>(path, str));
+                case EXACT -> exact(arrayParts);
+                case SUBSEQ -> subseq(arrayParts);
+                case SUBSET -> subset(arrayParts);
             };
         }
-        return Stream.of(new Destination<>(part));
+        return Stream.of(new Path.Destination<>(part));
+    }
+
+    private Stream<Path<T>> exact(Stream<Path<T>> paths) {
+        return Stream.of(new Path.ExactMatches<>(paths.toList(), str));
+    }
+
+    private Stream<Path<T>> subseq(Stream<Path<T>> paths) {
+        return Stream.of(new Path.Subsequence<>(paths.toList(), str));
+    }
+
+    private Stream<Path<T>> subset(Stream<Path<T>> paths) {
+        return paths.map(path -> new Path.Subset<>(path, str));
     }
 
     private static final Pointer.Leaf<?> EMPTY_LEAF = new Pointer.Leaf<>();
