@@ -2,12 +2,12 @@ package com.github.kjetilv.json;
 
 import java.util.stream.Stream;
 
-public interface EndProbe<T> extends Probe<T> {
+public sealed interface LeafProbe<T> extends Probe<T> permits FoundLeaf, DeadLeaf {
 
     T main();
 
     @Override
-    default Stream<EndProbe<T>> leaves() {
+    default Stream<LeafProbe<T>> leaves() {
         return Stream.of(this);
     }
 }

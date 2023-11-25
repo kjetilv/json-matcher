@@ -6,6 +6,10 @@ public record Rate(int num, int den) {
 
     public static Rate FAILURE = new Rate(0, 1);
 
+    public static Rate of(int num, int den) {
+        return num == den ? SUCCESS : new Rate(num, den);
+    }
+
     public Rate(int num, int den) {
         if (num < 0) {
             throw new IllegalArgumentException("Negative rate: " + num);
@@ -31,7 +35,7 @@ public record Rate(int num, int den) {
     }
 
     boolean is100Percent() {
-        return num == den;
+        return equals(SUCCESS);
     }
 
     private static int gcd(int v1, int v2) {

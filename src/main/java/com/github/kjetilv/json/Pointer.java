@@ -19,9 +19,8 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Pointer<T> pointer) {
-            if (pointer instanceof NameChain otherChain) {
-                return get().collect(Collectors.joining("/"))
-                    .compareTo(otherChain.get().collect(Collectors.joining("/")));
+            if (pointer instanceof NameChain chain) {
+                return path().compareTo(chain.path());
             }
             return 1;
         }
@@ -52,21 +51,17 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
 
     record Array<T>(int index, Pointer<T> elem, Structure<T> structure) implements Pointer<T>, NameChain {
 
-        @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Pointer<T> pointer) {
-            if (pointer instanceof Pointer.Array<T> array) {
-                return Integer.compare(index(), array.index());
-            }
-            return -1;
+            return switch (pointer) {
+                case Pointer.Array<T> array -> Integer.compare(index(), array.index());
+                default -> -1;
+            };
         }
 
         @Override
         public Optional<T> get(T main) {
-            return structure.arrayElements(main)
-                .skip(index)
-                .findFirst()
-                .flatMap(elem::get);
+            return structure.arrayElements(main).skip(index).findFirst().flatMap(elem::get);
         }
 
         @Override
@@ -83,10 +78,11 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
 
         @Override
         public Stream<String> get() {
-            return Stream.concat(
-                IntStream.of(index).mapToObj(Integer::toString),
-                elem instanceof NameChain nameChain ? nameChain.get() : Stream.empty()
-            );
+            Stream<String> stream = IntStream.of(index).mapToObj(Integer::toString);
+            return switch (elem) {
+                case NameChain nameChain -> Stream.concat(stream, nameChain.get());
+                case null, default -> stream;
+            };
         }
 
         @Override
@@ -107,7 +103,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
             return leaf;
         }
 
-        @SuppressWarnings({ "ComparatorMethodParameterNotUsed", "NullableProblems" })
+        @SuppressWarnings({"ComparatorMethodParameterNotUsed", "NullableProblems"})
         @Override
         public int compareTo(Pointer<T> pointer) {
             return -1;

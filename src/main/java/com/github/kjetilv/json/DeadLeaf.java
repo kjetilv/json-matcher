@@ -2,10 +2,10 @@ package com.github.kjetilv.json;
 
 import java.util.List;
 
-record DeadEnd<T>(T main, T expected, List<String> trace) implements EndProbe<T> {
+record DeadLeaf<T>(T main, T expected, List<String> trace) implements LeafProbe<T> {
 
-    public static <T> DeadEnd<T> deadEnd(T main, List<String> trace) {
-        return new DeadEnd<>(main, null, trace);
+    public static <T> DeadLeaf<T> deadEnd(T main, List<String> trace) {
+        return new DeadLeaf<>(main, null, trace);
     }
 
     @Override

@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.github.kjetilv.json.DeadEnd.deadEnd;
+import static com.github.kjetilv.json.DeadLeaf.deadEnd;
 
 sealed interface Path<T> {
 
@@ -38,7 +38,7 @@ sealed interface Path<T> {
         }
 
         private static <T> Optional<Probe<T>> unexpected(T main, T expected, List<String> trace) {
-            return Optional.of(new DeadEnd<>(main, expected, trace));
+            return Optional.of(new DeadLeaf<>(main, expected, trace));
         }
     }
 
@@ -48,8 +48,7 @@ sealed interface Path<T> {
         public Stream<Probe<T>> probe(T main, List<String> trace) {
             return DefaultStructureMatcher.exactPaths(
                 trace,
-                structure.arrayElements(main)
-                    .toList(),
+                structure.listElements(main),
                 paths
             );
         }
@@ -69,7 +68,7 @@ sealed interface Path<T> {
                 .flatMap(node -> path.probe(node, trace))
                 .filter(Probe::found)
                 .findFirst()
-                .orElseGet(() -> new DeadEnd<>(main, null, trace)));
+                .orElseGet(() -> new DeadLeaf<>(main, null, trace)));
         }
 
         @Override
@@ -83,19 +82,17 @@ sealed interface Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            return Stream.of(
-                new FoundNode<>(
-                    objectFields.stream().flatMap(objectField ->
-                            objectField.probe(main, trace))
-                        .toList(),
-                    trace
-                ));
+            List<Probe<T>> probes = objectFields.stream()
+                .flatMap(objectField ->
+                    objectField.probe(main, trace))
+                .toList();
+            return Stream.of(new FoundNode<>(probes, trace));
         }
 
         @Override
         public Optional<Extract<T>> extract(T main) {
             return Optional.of(
-                    Utils.toMap(objectFields.stream()
+                    Maps.toMap(objectFields.stream()
                         .flatMap(objectField ->
                             objectField.extract(main)
                                 .map(Extract::value)
@@ -132,8 +129,7 @@ sealed interface Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            List<T> mainElements = structure.arrayElements(main)
-                .toList();
+            List<T> mainElements = structure.listElements(main);
             if (mainElements.size() < paths.size()) {
                 return Stream.of(deadEnd(main, trace));
             }

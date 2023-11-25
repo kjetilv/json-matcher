@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class JsonNodeStructure implements Structure<JsonNode> {
+public final class JacksonStructure implements Structure<JsonNode> {
 
     @Override
     public boolean isNull(JsonNode node) {
@@ -59,16 +59,22 @@ public final class JsonNodeStructure implements Structure<JsonNode> {
     @Override
     public JsonNode combine(JsonNode one, JsonNode two) {
         if (isObject(one) && isObject(two)) {
-            Map<?, ?> mapOne = OBJECT_MAPPER.convertValue(one, Map.class);
-            Map<?, ?> mapTwo = OBJECT_MAPPER.convertValue(two, Map.class);
-            Map<?, ?> combine = Utils.combine(mapOne, mapTwo);
-            return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
+            return OBJECT_MAPPER.convertValue(
+                Combine.maps(
+                    OBJECT_MAPPER.convertValue(one, Map.class),
+                    OBJECT_MAPPER.convertValue(two, Map.class)
+                ),
+                JsonNode.class
+            );
         }
         if (isArray(one) && isArray(two)) {
-            List<?> listOne = OBJECT_MAPPER.convertValue(one, List.class);
-            List<?> listTwo = OBJECT_MAPPER.convertValue(two, List.class);
-            List<?> combine = Utils.combine(listOne, listTwo);
-            return OBJECT_MAPPER.convertValue(combine, JsonNode.class);
+            return OBJECT_MAPPER.convertValue(
+                Combine.lists(
+                    OBJECT_MAPPER.convertValue(one, List.class),
+                    OBJECT_MAPPER.convertValue(two, List.class)
+                ),
+                JsonNode.class
+            );
         }
         throw new IllegalStateException("Could not combine: " + one + " / " + two);
     }

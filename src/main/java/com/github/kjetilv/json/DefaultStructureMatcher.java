@@ -21,7 +21,7 @@ record DefaultStructureMatcher<T>(
                 mainElements.subList(paths.size(), mainElements.size())
                     .stream()
                     .map(element ->
-                        DeadEnd.deadEnd(element, trace))
+                        DeadLeaf.deadEnd(element, trace))
             );
         }
         if (paths.size() <= mainElements.size()) {
@@ -64,7 +64,7 @@ record DefaultStructureMatcher<T>(
         List<Pointer<T>> pointers = pointersIn(subset)
             .sorted(Comparator.naturalOrder())
             .toList();
-        return Utils.toMap(pointers.stream()
+        return Maps.toMap(pointers.stream()
             .map(pointer ->
                 Map.entry(pointer, pointer.get(subset)
                     .filter(value -> !str.isNull(value))
@@ -90,7 +90,7 @@ record DefaultStructureMatcher<T>(
                     .map(entry.getValue().found()))
                 .toList();
 
-        return (Optional<T>) list.stream().reduce(Utils::combine)
+        return (Optional<T>) list.stream().reduce(Combine::objects)
             .map(Map.class::cast)
             .map(diff ->
                 str.toObject(diff));

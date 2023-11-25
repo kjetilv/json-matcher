@@ -1,7 +1,5 @@
 package com.github.kjetilv.json;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +20,10 @@ public interface Structure<T> {
     Optional<T> get(T object, String field);
 
     Stream<T> arrayElements(T array);
+
+    default List<T> listElements(T array) {
+        return arrayElements(array).toList();
+    }
 
     default Map<String, T> fieldsMap(T object) {
         return namedFields(object).collect(Collectors.toMap(

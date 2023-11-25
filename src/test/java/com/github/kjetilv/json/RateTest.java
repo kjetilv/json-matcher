@@ -9,7 +9,8 @@ class RateTest {
     @Test
     public void test() {
         assertEquals(
-            new Rate(7, 72),
-            new Rate(2, 48).plus(new Rate(1, 18)));
+            Rate.of(7, 72),
+            Rate.of(2, 48).plus(Rate.of(1, 18))
+        );
     }
 }

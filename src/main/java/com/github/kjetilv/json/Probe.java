@@ -3,7 +3,7 @@ package com.github.kjetilv.json;
 import java.util.List;
 import java.util.stream.Stream;
 
-public interface Probe<T> {
+public sealed interface Probe<T> permits LeafProbe, NodeProbe {
 
     default boolean found() {
         return successRate().is100Percent();
@@ -13,5 +13,5 @@ public interface Probe<T> {
 
     List<String> trace();
 
-    Stream<EndProbe<T>> leaves();
+    Stream<LeafProbe<T>> leaves();
 }

@@ -1,488 +1,671 @@
 package com.github.kjetilv.json;
 
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static com.github.kjetilv.json.JsonDings.json;
+import static com.github.kjetilv.json.JsonDings.map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("SameParameterValue")
 class JsonMatcherTest {
 
-    private StructureMatcher<JsonNode> subsetMatcher;
+    private StructureMatcher<JsonNode> subsetMatcher1;
 
-    private StructureMatcher<JsonNode> exactMatcher;
+    private StructureMatcher<Object> subsetMatcher2;
+
+    private StructureMatcher<JsonNode> exactMatcher1;
+
+    private StructureMatcher<Object> exactMatcher2;
 
     @BeforeEach
     void setUp() {
-        JsonNode json = JsonDings.json(JSON);
-        subsetMatcher = Structures.matcher(
-            json,
-            new JsonNodeStructure(),
-            Structures.ArrayStrategy.SUBSET);
-        exactMatcher = Structures.matcher(
-            json,
-            new JsonNodeStructure(),
-            Structures.ArrayStrategy.EXACT);
+        subsetMatcher1 = Structures.matcher(
+            json(JSON),
+            new JacksonStructure(),
+            Structures.ArrayStrategy.SUBSET
+        );
+        subsetMatcher2 = Structures.matcher(
+            JsonDings.map(JSON),
+            new MapsStructure(),
+            Structures.ArrayStrategy.SUBSET
+        );
+        exactMatcher1 = Structures.matcher(
+            json(JSON),
+            new JacksonStructure(),
+            Structures.ArrayStrategy.EXACT
+        );
+        exactMatcher2 = Structures.matcher(
+            JsonDings.map(JSON),
+            new MapsStructure(),
+            Structures.ArrayStrategy.EXACT
+        );
     }
 
     @AfterEach
     void tearDown() {
-        subsetMatcher = null;
-        exactMatcher = null;
+        subsetMatcher1 = null;
+        exactMatcher1 = null;
     }
 
     @Test
     void simpleSubsetIsPart() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "foo":
-              {
-                "bar": 4
-              }
-            }
-            """
+            subsetMatcher1, json("""
+                {
+                  "foo":
+                  {
+                    "bar": 4
+                  }
+                }
+                """)
         );
     }
 
     @Test
     void simpleDeviatingSubsetIsNotPart() {
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 5
-              }
-            }
-            """
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 5
+                  }
+                }
+                """)
         );
     }
 
     @Test
     void explicitNullIsNotPart() {
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": null
-              }
-            }
-            """
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": null
+                  }
+                }
+                """)
         );
     }
 
     @Test
     void notPartIfArrayIsDifferent() {
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [7, 8] }
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [7, 8] }
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                    }
+                  },
+                  "arr2": [ true, "ouch" ]
                 }
-              },
-              "arr2": [ true, "ouch" ]
-            }
-            """);
+                """)
+        );
+        assertNotPart(
+            subsetMatcher2,
+            map("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [7, 8] }
+                      ]
+                    }
+                  }
+                }
+                """)
+        );
+        assertNotPart(
+            subsetMatcher2,
+            map("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                    }
+                  },
+                  "arr2": [ true, "ouch" ]
+                }
+                """)
+        );
     }
 
     @Test
     void notPartIfArrayIsActuallyObject() {
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": { "foo": 5, "bar": 6 }}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": { "foo": 5, "bar": 6 }}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """
+                """)
         );
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "arr2": { "itsATrick": true, "reaction": "dip" }
-            }
-            """
+            subsetMatcher1,
+            json("""
+                {
+                  "arr2": { "itsATrick": true, "reaction": "dip" }
+                }
+                """)
+        );
+        assertNotPart(
+            subsetMatcher2,
+            map("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": { "foo": 5, "bar": 6 }}
+                      ]
+                    }
+                  }
+                }
+                """)
+        );
+        assertNotPart(
+            subsetMatcher2,
+            map("""
+                {
+                  "arr2": { "itsATrick": true, "reaction": "dip" }
+                }
+                """)
         );
     }
 
     @Test
-    void notPartFieldsDontMatchObject() {
+    void notPartIfFieldsDontMatchObject() {
         assertNotPart(
-            Structures.matcher(
-                JsonDings.json(
-                    """
-                      {
-                      "arr": [
-                        {
-                        "foo": 1,
-                        "bar": 2
-                        },
-                        {
-                        "foo": 3,
-                        "bar": 4
-                        }
-                      ]
-                    }"""),
-                new JsonNodeStructure(),
-                Structures.ArrayStrategy.SUBSET),
             """
-            {
-              "arr": [
-              {
-                "foo": 1,
-                "bar": 4
-              }
-              ]
-            }
-            """);
+                  {
+                  "arr": [
+                    {
+                    "foo": 1,
+                    "bar": 2
+                    },
+                    {
+                    "foo": 3,
+                    "bar": 4
+                    }
+                  ]
+                }""",
+            """
+                {
+                  "arr": [
+                  {
+                    "foo": 1,
+                    "bar": 4
+                  }
+                  ]
+                }
+                """
+        );
+    }
+
+    @Test
+    void notPartUnlessStructureIsSame() {
+        assertNotPart(
+            """
+                {
+                  "foo": {
+                    "bar": 5,
+                    "zot": false
+                  },
+                  "bar": {
+                     "bar": 6,
+                     "zot": true
+                  }
+                }
+                """,
+            """
+                {
+                  "foo": {
+                    "bar": 6,
+                    "zot": false
+                  }
+                }
+                """
+        );
     }
 
     @Test
     void isPartIfArrayIsSubset() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "rarg": [3]}
-                  ]
+            subsetMatcher1, json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "rarg": [3]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void isPartIfArrayIsExactMatch() {
         assertPart(
-            exactMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [ 4, 5, 6 ]},
-                    { "rarg": [ 3, 2, 1 ]}
-                  ]
+            exactMatcher1, json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [ 4, 5, 6 ]},
+                        { "rarg": [ 3, 2, 1 ]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void isNotPartIfArrayIsNotExactMatch() {
-        StructureMatcher<JsonNode> matcher = Structures.matcher(
-            JsonDings.json(
+        assertArrays(Structures.matcher(
+            json(
                 """
-                {
-                  "foo": [ 1, 2, 3 ]
-                }
-                """),
-            new JsonNodeStructure(),
-            Structures.ArrayStrategy.EXACT);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 0, 1, 2, 3 ] }
-            """);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 1, 3, 2 ] }
-            """);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 1, 2, 4 ] }
-            """);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 1, 2, 3, 4 ] }
-            """);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 0, 1, 2, 3, 4 ] }
-            """);
-        assertPart(
-            matcher,
-            """
-            { "foo": [ 1, 2, 3 ] }
-            """);
-        assertNotPart(
-            matcher,
-            """
-            { "foo": [ 1, 2 ] }
-            """);
+                    {
+                      "foo": [ 1, 2, 3 ]
+                    }
+                    """),
+            new JacksonStructure(),
+            Structures.ArrayStrategy.EXACT
+        ));
+        assertArraysMap(Structures.matcher(
+            map(
+                """
+                    {
+                      "foo": [ 1, 2, 3 ]
+                    }
+                    """),
+            new MapsStructure(),
+            Structures.ArrayStrategy.EXACT
+        ));
     }
 
     @Test
     void isNotPartIfArrayIsNotSubsequence() {
         StructureMatcher<JsonNode> matcher = Structures.matcher(
-            JsonDings.json(
+            json(
                 """
-                {
-                  "foo": [ 1, 2, 3, 4, 5 ]
-                }
-                """),
-            new JsonNodeStructure(),
-            Structures.ArrayStrategy.SUBSEQ);
+                    {
+                      "foo": [ 1, 2, 3, 4, 5 ]
+                    }
+                    """),
+            new JacksonStructure(),
+            Structures.ArrayStrategy.SUBSEQ
+        );
         assertNotPart(
             matcher,
-            """
-            { "foo": [ 0, 1, 2, 3 ] }
-            """);
+            json("""
+                { "foo": [ 0, 1, 2, 3 ] }
+                """)
+        );
         assertNotPart(
             matcher,
-            """
-            { "foo": [ 1, 3, 2 ] }
-            """);
+            json("""
+                { "foo": [ 1, 3, 2 ] }
+                """)
+        );
         assertNotPart(
             matcher,
-            """
-            { "foo": [ 1, 2, 4 ] }
-            """);
+            json("""
+                { "foo": [ 1, 2, 4 ] }
+                """)
+        );
         assertNotPart(
             matcher,
-            """
-            { "foo": [ 1, 2, 3, 5 ] }
-            """);
+            json("""
+                { "foo": [ 1, 2, 3, 5 ] }
+                """)
+        );
         assertNotPart(
             matcher,
-            """
-            { "foo": [ 0, 1, 2, 3, 4 ] }
-            """);
+            json("""
+                { "foo": [ 0, 1, 2, 3, 4 ] }
+                """)
+        );
         List.of(
-            "1",
-            "1, 2",
-            "1, 2, 3",
-            "1, 2, 3, 4, 5",
-            "2, 3, 4, 5",
-            "2, 3, 4",
-            "2, 3",
-            "2",
-            "3, 4, 5",
-            "3, 4",
-            "3",
-            "4",
-            "4, 5",
-            "5"
-        ).forEach(part ->
-            assertPart(
-                matcher, "{ \"foo\": [" + part + "]}"
-            ));
+                "1",
+                "1, 2",
+                "1, 2, 3",
+                "1, 2, 3, 4, 5",
+                "2, 3, 4, 5",
+                "2, 3, 4",
+                "2, 3",
+                "2",
+                "3, 4, 5",
+                "3, 4",
+                "3",
+                "4",
+                "4, 5",
+                "5"
+            )
+            .forEach(part ->
+                assertPart(
+                    matcher, json("{ \"foo\": [" + part + "]}")
+                ));
         assertPart(
-            matcher,
-            """
-            { "foo": [ 1, 2, 3 ] }
-            """);
+            matcher, json("""
+                { "foo": [ 1, 2, 3 ] }
+                """)
+        );
     }
 
     @Test
     void isPartIfArrayIsSubsetRegardlessOfOrder() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [6, 5]}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [6, 5]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void isPartIfArrayIsSubsetRegardlessOfArity() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [6, 5, 5, 5, 5]}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [6, 5, 5, 5, 5]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void notPartIfArrayHasAdditionalElements() {
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [3, 4, 5, 6]}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [3, 4, 5, 6]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void notPartIfArrayHasExplicityNulls() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [4]}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [4]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "foo": {
-                "bar": 4,
-                "zot": {
-                  "zips": [
-                    { "argh": [null]}
-                  ]
+            subsetMatcher1,
+            json("""
+                {
+                  "foo": {
+                    "bar": 4,
+                    "zot": {
+                      "zips": [
+                        { "argh": [null]}
+                      ]
+                    }
+                  }
                 }
-              }
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void deviatingPathsThroughListsAreReturned() {
         assertPart(
-            subsetMatcher,
-            """
-            {
-              "departments": [
+            subsetMatcher1,
+            json("""
                 {
-                  "tech": {
-                    "employees": [
-                       { "name": "Harry" }
-                    ]
-                  }
+                  "departments": [
+                    {
+                      "tech": {
+                        "employees": [
+                           { "name": "Harry" }
+                        ]
+                      }
+                    }
+                  ]
                 }
-              ]
-            }
-            """);
+                """)
+        );
         assertNotPart(
-            subsetMatcher,
-            """
-            {
-              "departments": [
+            subsetMatcher1,
+            json("""
                 {
-                  "sales": {
-                    "employees": [
-                       { "name": "Harry" }
-                    ]
-                  }
+                  "departments": [
+                    {
+                      "sales": {
+                        "employees": [
+                           { "name": "Harry" }
+                        ]
+                      }
+                    }
+                  ]
                 }
-              ]
-            }
-            """);
+                """)
+        );
     }
 
     @Test
     void arrayTest() {
-        assertNotPart(subsetMatcher, "[3]");
+        assertNotPart(subsetMatcher1, json("[3]"));
     }
 
     private static final String JSON =
         """
-        {
-          "foo": {
-            "bar": 4,
-            "zot": {
-              "zip": 45.4,
-              "zips": [
-               { "argh": [ 4, 5, 6 ]},
-               { "rarg": [ 3, 2, 1 ]}
-              ]
-            }
-          },
-          "arr2": [ "dip", 5, true ],
-          "departments": [
             {
-                "tech": {
-                  "employees": [
-                     { "name": "Harry", "salary": 4.5 },
-                     { "name": "Sally", "salary": 5.5 }
-                  ]
-              }
-            },
-            {
-                "sales": {
-                  "employees": [
-                    { "name": "Dumb", "salary": 10.5 },
-                    { "name": "Dumber", "salary": 11.5 }
+              "foo": {
+                "bar": 4,
+                "zot": {
+                  "zip": 45.4,
+                  "zips": [
+                   { "argh": [ 4, 5, 6 ]},
+                   { "rarg": [ 3, 2, 1 ]}
                   ]
                 }
+              },
+              "arr2": [ "dip", 5, true ],
+              "departments": [
+                {
+                    "tech": {
+                      "employees": [
+                         { "name": "Harry", "salary": 4.5 },
+                         { "name": "Sally", "salary": 5.5 }
+                      ]
+                  }
+                },
+                {
+                    "sales": {
+                      "employees": [
+                        { "name": "Dumb", "salary": 10.5 },
+                        { "name": "Dumber", "salary": 11.5 }
+                      ]
+                    }
+                }
+              ]
             }
-          ]
-        }
-        """;
+            """;
 
-    private static void assertNotPart(StructureMatcher<JsonNode> matcher, String content) {
-        assertThat(matcher.contains(JsonDings.json(content)))
-            .describedAs("Should not be part of: " + matcher + "\n subset : " + content)
+    private static void assertArrays(StructureMatcher<JsonNode> matcher) {
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 0, 1, 2, 3 ] }
+                """)
+        );
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 1, 3, 2 ] }
+                """)
+        );
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 1, 2, 4 ] }
+                """)
+        );
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 1, 2, 3, 4 ] }
+                """)
+        );
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 0, 1, 2, 3, 4 ] }
+                """)
+        );
+        assertPart(
+            matcher, json("""
+                { "foo": [ 1, 2, 3 ] }
+                """)
+        );
+        assertNotPart(
+            matcher,
+            json("""
+                { "foo": [ 1, 2 ] }
+                """)
+        );
+    }
+
+    private static void assertArraysMap(StructureMatcher<Object> matcher) {
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 0, 1, 2, 3 ] }
+                """)
+        );
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 1, 3, 2 ] }
+                """)
+        );
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 1, 2, 4 ] }
+                """)
+        );
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 1, 2, 3, 4 ] }
+                """)
+        );
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 0, 1, 2, 3, 4 ] }
+                """)
+        );
+        assertPart(matcher, map(
+            """
+                { "foo": [ 1, 2, 3 ] }
+                """)
+        );
+        assertNotPart(matcher, map(
+            """
+                { "foo": [ 1, 2 ] }
+                """)
+        );
+    }
+
+    private static <T> void assertNotPart(StructureMatcher<T> matcher, T json) {
+        assertThat(matcher.contains(json))
+            .describedAs("Should not be part of: " + matcher + "\n subset : " + JsonDings.write(json))
             .isFalse();
     }
 
-    private static void assertPart(StructureMatcher<JsonNode> matcher, String content) {
-        assertThat(matcher.contains(JsonDings.json(content)))
-            .describedAs("Should be a part: " + content)
+    private static <T> void assertPart(StructureMatcher<T> matcher, T json) {
+        assertThat(matcher.contains(json))
+            .describedAs("Should be a part: " + JsonDings.write(json))
             .isTrue();
+    }
+
+    private static void assertNotPart(String json, String subset) {
+        assertNotPart(
+            Structures.matcher(
+                json(json),
+                new JacksonStructure(),
+                Structures.ArrayStrategy.SUBSET
+            ),
+            json(subset)
+        );
+        assertNotPart(
+            Structures.matcher(
+                map(json),
+                new MapsStructure(),
+                Structures.ArrayStrategy.SUBSET
+            ),
+            map(subset)
+        );
     }
 }

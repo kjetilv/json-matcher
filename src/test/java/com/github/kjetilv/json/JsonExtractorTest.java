@@ -90,14 +90,14 @@ public class JsonExtractorTest {
     }
 
     private static StructureExtractor<JsonNode> extractor(JsonNode main) {
-        return Structures.extractor(main, new JsonNodeStructure());
+        return Structures.extractor(main, new JacksonStructure());
     }
 
     private static StructureDiffer<JsonNode> differ(JsonNode main) {
-        return Structures.differ(main, new JsonNodeStructure());
+        return Structures.differ(main, new JacksonStructure());
     }
 
     private static StructureMatcher<JsonNode> matcher(JsonNode main) {
-        return Structures.matcher(main, new JsonNodeStructure(), Structures.ArrayStrategy.EXACT);
+        return Structures.matcher(main, new JacksonStructure(), Structures.ArrayStrategy.EXACT);
     }
 }
