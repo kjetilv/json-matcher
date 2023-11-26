@@ -44,7 +44,8 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public Match<T> match(T part) {
-        return new PathsMatch<>(pathsIn(part).flatMap(path ->
+        return new PathsMatch<>(pathsIn(part)
+            .flatMap(path ->
                 path.probe(main))
             .toList());
     }
@@ -81,14 +82,11 @@ record DefaultStructureMatcher<T>(
     @Override
     public Optional<T> diff(T subset) {
         Map<Pointer<T>, Diff<T>> subdiff = subdiff(subset);
-
-        List<Object>
-            list =
-            subdiff.entrySet()
-                .stream()
-                .map(entry -> entry.getKey()
-                    .map(entry.getValue().found()))
-                .toList();
+        List<Object> list = subdiff.entrySet()
+            .stream()
+            .map(entry -> entry.getKey()
+                .map(entry.getValue().found()))
+            .toList();
 
         return (Optional<T>) list.stream().reduce(Combine::objects)
             .map(Map.class::cast)

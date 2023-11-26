@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -15,15 +14,6 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
     Object map(Object leaf);
 
     record Node<T>(String name, Pointer<T> next, Structure<T> structure) implements Pointer<T>, NameChain {
-
-        @SuppressWarnings("NullableProblems")
-        @Override
-        public int compareTo(Pointer<T> pointer) {
-            if (pointer instanceof NameChain chain) {
-                return path().compareTo(chain.path());
-            }
-            return 1;
-        }
 
         @Override
         public Optional<T> get(T main) {
@@ -43,6 +33,15 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
             );
         }
 
+        @SuppressWarnings("NullableProblems")
+        @Override
+        public int compareTo(Pointer<T> pointer) {
+            if (pointer instanceof NameChain chain) {
+                return path().compareTo(chain.path());
+            }
+            return 1;
+        }
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "[" + name + ": " + next + "]";
@@ -52,16 +51,9 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
     record Array<T>(int index, Pointer<T> elem, Structure<T> structure) implements Pointer<T>, NameChain {
 
         @Override
-        public int compareTo(Pointer<T> pointer) {
-            return switch (pointer) {
-                case Pointer.Array<T> array -> Integer.compare(index(), array.index());
-                default -> -1;
-            };
-        }
-
-        @Override
         public Optional<T> get(T main) {
-            return structure.arrayElements(main).skip(index).findFirst().flatMap(elem::get);
+            return structure.arrayElements(main).skip(index)
+                .findFirst().flatMap(elem::get);
         }
 
         @Override
@@ -83,6 +75,14 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
                 case NameChain nameChain -> Stream.concat(stream, nameChain.get());
                 case null, default -> stream;
             };
+        }
+
+        @SuppressWarnings("NullableProblems")
+        @Override
+        public int compareTo(Pointer<T> pointer) {
+            return pointer instanceof Pointer.Array<T> array
+                ? Integer.compare(index(), array.index())
+                : -1;
         }
 
         @Override
