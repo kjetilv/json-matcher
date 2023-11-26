@@ -7,7 +7,9 @@ import java.util.stream.Stream;
 final class Print {
 
     static String trace(List<String> tr) {
-        return tr.stream().flatMap(t -> Stream.of("/", t)).collect(Collectors.joining());
+        return tr == null
+            ? "/"
+            : tr.stream().flatMap(t -> Stream.of("/", t)).collect(Collectors.joining());
     }
 
     private Print() {
