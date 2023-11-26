@@ -16,14 +16,17 @@ sealed interface Path<T> {
 
     Optional<Extract<T>> extract(T main);
 
-    record Destination<T>(T expected) implements Path<T> {
+    record Destination<T>(T expected)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
             return Optional.ofNullable(main)
                 .filter(expected::equals)
-                .map(equal -> found(expected, trace))
-                .or(() -> unexpected(main, expected, trace))
+                .map(equal ->
+                    found(expected, trace))
+                .or(() ->
+                    unexpected(main, expected, trace))
                 .stream();
         }
 
@@ -37,20 +40,22 @@ sealed interface Path<T> {
             return new FoundLeaf<>(expected, trace);
         }
 
-        private static <T> Optional<Probe<T>> unexpected(T main, T expected, List<String> trace) {
+        private static <T> Optional<Probe<T>> unexpected(
+            T main,
+            T expected,
+            List<String> trace
+        ) {
             return Optional.of(new DeadLeaf<>(main, expected, trace));
         }
     }
 
-    record ExactMatches<T>(List<Path<T>> paths, Structure<T> structure) implements Path<T> {
+    record ExactMatches<T>(List<Path<T>> paths, Structure<T> structure)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            return DefaultStructureMatcher.exactPaths(
-                trace,
-                structure.listElements(main),
-                paths
-            );
+            List<T> elements = structure.listElements(main);
+            return DefaultStructureMatcher.exactPaths(trace, elements, paths);
         }
 
         @Override
@@ -60,12 +65,14 @@ sealed interface Path<T> {
         }
     }
 
-    record Subset<T>(Path<T> path, Structure<T> structure) implements Path<T> {
+    record Subset<T>(Path<T> path, Structure<T> structure)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
             return Stream.of(structure.arrayElements(main)
-                .flatMap(node -> path.probe(node, trace))
+                .flatMap(node ->
+                    path.probe(node, trace))
                 .filter(Probe::found)
                 .findFirst()
                 .orElseGet(() -> new DeadLeaf<>(main, null, trace)));
@@ -78,7 +85,8 @@ sealed interface Path<T> {
         }
     }
 
-    record ExactObject<T>(List<ObjectField<T>> objectFields, Structure<T> structure) implements Path<T> {
+    record ExactObject<T>(List<ObjectField<T>> objectFields, Structure<T> structure)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
@@ -92,24 +100,29 @@ sealed interface Path<T> {
         @Override
         public Optional<Extract<T>> extract(T main) {
             return Optional.of(
-                    Maps.toMap(objectFields.stream()
-                        .flatMap(objectField ->
-                            objectField.extract(main)
-                                .map(Extract::value)
-                                .map(t -> Map.entry(objectField.name(), t))
-                                .stream())))
-                .filter(map -> !map.isEmpty())
-                .map(map -> () -> structure.toObject(map));
+                    Maps.toMap(objectFields.stream().flatMap(objectField ->
+                        objectField.extract(main)
+                            .map(Extract::value)
+                            .map(value ->
+                                Map.entry(objectField.name(), value))
+                            .stream())))
+                .filter(map ->
+                    !map.isEmpty())
+                .map(map -> () ->
+                    structure.toObject(map));
         }
     }
 
-    record ObjectField<T>(String name, Path<T> next, Structure<T> structure) implements Path<T> {
+    record ObjectField<T>(String name, Path<T> next, Structure<T> structure)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
             return structure.get(main, name)
-                .map(field -> next.probe(field, addTo(trace, name)))
-                .orElseGet(() -> Stream.of(deadEnd(main, trace)));
+                .map(field ->
+                    next.probe(field, addTo(trace, name)))
+                .orElseGet(() ->
+                    Stream.of(deadEnd(main, trace)));
         }
 
         @Override
@@ -125,7 +138,8 @@ sealed interface Path<T> {
         }
     }
 
-    record Subsequence<T>(List<Path<T>> paths, Structure<T> structure) implements Path<T> {
+    record Subsequence<T>(List<Path<T>> paths, Structure<T> structure)
+        implements Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
@@ -134,17 +148,16 @@ sealed interface Path<T> {
                 return Stream.of(deadEnd(main, trace));
             }
             OptionalInt firstMatch = IntStream.range(0, mainElements.size())
-                .filter(i ->
-                    paths.get(0).probe(mainElements.get(i), trace)
+                .filter(index ->
+                    paths.getFirst()
+                        .probe(mainElements.get(index), trace)
                         .allMatch(Probe::found))
                 .findFirst();
-            return firstMatch.isEmpty()
-                ? Stream.of(deadEnd(main, trace))
-                : DefaultStructureMatcher.exactPaths(
-                    trace,
-                    subsequence(firstMatch.getAsInt(), mainElements),
-                    paths
-                );
+            if (firstMatch.isEmpty()) {
+                return Stream.of(deadEnd(main, trace));
+            }
+            List<T> subsequence = subsequence(firstMatch.getAsInt(), mainElements);
+            return DefaultStructureMatcher.exactPaths(trace, subsequence, paths);
         }
 
         @Override
