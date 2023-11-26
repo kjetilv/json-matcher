@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -33,22 +32,17 @@ public final class JacksonStructure implements Structure<JsonNode> {
             return Optional.empty();
         }
         return Optional.ofNullable(object.get(field))
-            .filter(notNull());
+            .filter(node -> !node.isNull());
     }
 
     @Override
     public Stream<JsonNode> arrayElements(JsonNode array) {
-        if (isNull(array)) {
-            return Stream.empty();
-        }
-        return stream(array::elements);
+        return isNull(array) ? Stream.empty() : stream(array::elements);
     }
 
     @Override
     public Stream<Map.Entry<String, JsonNode>> namedFields(JsonNode object) {
-        return isNull(object)
-            ? Stream.empty()
-            : stream(object::fields);
+        return isNull(object) ? Stream.empty() : stream(object::fields);
     }
 
     @Override
@@ -85,10 +79,6 @@ public final class JacksonStructure implements Structure<JsonNode> {
     }
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    private static Predicate<JsonNode> notNull() {
-        return node -> !node.isNull();
-    }
 
     private static <T> Stream<T> stream(Iterable<T> elements) {
         return elements != null && elements.iterator().hasNext()

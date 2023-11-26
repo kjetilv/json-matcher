@@ -60,17 +60,7 @@ public final class MapsStructure implements Structure<Object> {
 
     @Override
     public Object combine(Object one, Object two) {
-        if (one == null) {
-            return two;
-        }
-        if (two == null) {
-            return one;
-        }
-        boolean reconcilable = isArray(one) == isArray(two);
-        if (reconcilable) {
-            return Combine.objects(one, two);
-        }
-        throw new IllegalStateException("Unknown data: " + one + " /" + two);
+        return Combine.objects(one, two);
     }
 
     @SuppressWarnings("unchecked")
