@@ -45,16 +45,14 @@ record DefaultStructureMatcher<T>(
     @Override
     public Match<T> match(T part) {
         return new PathsMatch<>(pathsIn(part)
-            .flatMap(path ->
-                path.probe(main))
+            .flatMap(path -> path.probe(main))
             .toList());
     }
 
     @Override
     public Optional<T> extract(T mask) {
-        Stream<Path<T>> pathStream = pathsIn(mask);
-        return pathStream.map(path ->
-                path.extract(main))
+        return pathsIn(mask)
+            .map(path -> path.extract(main))
             .flatMap(Optional::stream)
             .map(Extract::value)
             .reduce(str::combine);
@@ -62,10 +60,7 @@ record DefaultStructureMatcher<T>(
 
     @Override
     public Map<Pointer<T>, Diff<T>> subdiff(T subset) {
-        List<Pointer<T>> pointers = pointersIn(subset)
-            .sorted(Comparator.naturalOrder())
-            .toList();
-        return Maps.toMap(pointers.stream()
+        return Maps.toMap(pointersIn(subset).sorted(Comparator.naturalOrder())
             .map(pointer ->
                 Map.entry(pointer, pointer.get(subset)
                     .filter(value -> !str.isNull(value))
@@ -81,14 +76,11 @@ record DefaultStructureMatcher<T>(
     @SuppressWarnings("unchecked")
     @Override
     public Optional<T> diff(T subset) {
-        Map<Pointer<T>, Diff<T>> subdiff = subdiff(subset);
-        List<Object> list = subdiff.entrySet()
+        return (Optional<T>) subdiff(subset).entrySet()
             .stream()
             .map(entry -> entry.getKey()
                 .map(entry.getValue().found()))
-            .toList();
-
-        return (Optional<T>) list.stream().reduce(Combine::objects)
+            .reduce(Combine::objects)
             .map(Map.class::cast)
             .map(diff ->
                 str.toObject(diff));
