@@ -5,41 +5,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-record DefaultStructureMatcher<T>(
-    T main,
-    Structure<T> str,
-    Structures.ArrayStrategy arr
-)
+record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStrategy arr)
     implements StructureMatcher<T>, StructureExtractor<T>, StructureDiffer<T> {
 
-    static <T> Stream<Probe<T>> exactPaths(
-        List<String> trace, List<T> mainElements, List<Path<T>> paths
-    ) {
-        if (paths.size() < mainElements.size()) {
+    static <T> Stream<Probe<T>> exactPaths(List<String> trace, List<T> mainElements, List<Path<T>> paths) {
+        int pathsSize = paths.size();
+        int mainSize = mainElements.size();
+        if (pathsSize < mainSize) {
             return Stream.concat(
                 matches(mainElements, paths, trace),
-                mainElements.subList(paths.size(), mainElements.size())
+                mainElements.subList(pathsSize, mainSize)
                     .stream()
                     .map(element ->
                         DeadLeaf.deadEnd(element, trace))
             );
         }
-        if (paths.size() <= mainElements.size()) {
-            return matches(mainElements, paths, trace);
+        if (pathsSize > mainSize) {
+            return Stream.concat(
+                matches(mainElements, paths, trace),
+                paths.subList(mainSize, pathsSize)
+                    .stream()
+                    .flatMap(path ->
+                        path.probe(null, trace))
+            );
         }
-        return Stream.concat(
-            matches(mainElements, paths, trace),
-            paths.subList(mainElements.size(), paths.size())
-                .stream()
-                .flatMap(path ->
-                    path.probe(null, trace))
-        );
+        return matches(mainElements, paths, trace);
     }
 
-    DefaultStructureMatcher(T main, Structure<T> str, Structures.ArrayStrategy arr) {
-        this.main = Objects.requireNonNull(main, "main");
-        this.str = Objects.requireNonNull(str, "str");
-        this.arr = arr == null ? Structures.ArrayStrategy.SUBSET : arr;
+    DefaultStructureMatcher {
+        Objects.requireNonNull(main, "main");
+        Objects.requireNonNull(str, "str");
     }
 
     @Override
@@ -118,6 +113,9 @@ record DefaultStructureMatcher<T>(
         }
         if (str.isArray(part)) {
             Stream<Path<T>> arrayParts = str.mapArrayElements(part, this::pathsIn);
+            if (arr == null) {
+                return subseq(arrayParts);
+            }
             return switch (arr) {
                 case EXACT -> exact(arrayParts);
                 case SUBSEQ -> subseq(arrayParts);

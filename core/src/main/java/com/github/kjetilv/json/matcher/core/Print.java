@@ -13,6 +13,5 @@ final class Print {
     }
 
     private Print() {
-
     }
 }

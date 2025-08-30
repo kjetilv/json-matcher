@@ -16,7 +16,10 @@ final class JsonDings {
         }
     }
 
-    static JsonNode json(String content) {
+    static JsonNode json(
+        //language=json
+        String content
+    ) {
         try {
             return OBJECT_MAPPER.readTree(content);
         } catch (Exception e) {
