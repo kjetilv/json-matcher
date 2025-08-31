@@ -21,6 +21,7 @@ record FoundNode<T>(List<Probe<T>> branches, List<String> trace) implements Node
         return branches.stream().flatMap(Probe::leaves);
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[" + Print.trace(trace) + " -> " + branches + "]";

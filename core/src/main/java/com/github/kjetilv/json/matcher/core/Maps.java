@@ -6,7 +6,7 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class Maps {
+final class Maps {
 
     static <K, V> Map<K, V> toMap(Stream<Map.Entry<K, V>> entryStream) {
         return toMap(entryStream, null);
@@ -24,7 +24,7 @@ public final class Maps {
         ));
     }
 
-    private Maps(){
+    private Maps() {
 
     }
 

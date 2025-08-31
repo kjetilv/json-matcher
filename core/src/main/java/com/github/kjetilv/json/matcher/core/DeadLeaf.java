@@ -13,6 +13,7 @@ record DeadLeaf<T>(T main, T expected, List<String> trace) implements LeafProbe<
         return Rate.FAILURE;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[" +

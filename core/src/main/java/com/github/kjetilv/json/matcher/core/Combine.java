@@ -5,25 +5,6 @@ import java.util.stream.Stream;
 
 public final class Combine {
 
-    static Object objects(Object one, Object two) {
-        if (Objects.equals(one, two)) {
-            return one;
-        }
-        if (one == null) {
-            return two;
-        }
-        if (two == null) {
-            return one;
-        }
-        if (one instanceof Map<?, ?> mapOne && two instanceof Map<?, ?> mapTwo) {
-            return maps(mapOne, mapTwo);
-        }
-        if (one instanceof List<?> collOne && two instanceof List<?> collTwo) {
-            return lists(collOne, collTwo);
-        }
-        throw new IllegalArgumentException("Cannot combine: " + one + " + " + two);
-    }
-
     public static Map<?, ?> maps(Map<?, ?> one, Map<?, ?> two) {
         if (one == null || one.isEmpty()) {
             return two == null ? Collections.emptyMap() : two;
@@ -61,8 +42,25 @@ public final class Combine {
         return list;
     }
 
-    private Combine() {
-
+    static Object objects(Object one, Object two) {
+        if (Objects.equals(one, two)) {
+            return one;
+        }
+        if (one == null) {
+            return two;
+        }
+        if (two == null) {
+            return one;
+        }
+        if (one instanceof Map<?, ?> mapOne && two instanceof Map<?, ?> mapTwo) {
+            return maps(mapOne, mapTwo);
+        }
+        if (one instanceof List<?> collOne && two instanceof List<?> collTwo) {
+            return lists(collOne, collTwo);
+        }
+        throw new IllegalArgumentException("Cannot combine: " + one + " + " + two);
     }
 
+    private Combine() {
+    }
 }

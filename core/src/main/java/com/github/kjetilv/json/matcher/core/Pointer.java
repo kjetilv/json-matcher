@@ -42,6 +42,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
             return 1;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return getClass().getSimpleName() + "[" + name + ": " + next + "]";
@@ -85,6 +86,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
                 : -1;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return getClass().getSimpleName() + "[" + index + ": " + elem + "]";
@@ -109,6 +111,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
             return -1;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return getClass().getSimpleName() + "[]";

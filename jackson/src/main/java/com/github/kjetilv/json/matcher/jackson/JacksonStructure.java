@@ -44,7 +44,7 @@ public final class JacksonStructure implements Structure<JsonNode> {
 
     @Override
     public Stream<Map.Entry<String, JsonNode>> namedFields(JsonNode object) {
-        return isNull(object) ? Stream.empty() : stream(object::fields);
+        return isNull(object) ? Stream.empty() : stream(object.properties());
     }
 
     @Override
@@ -75,16 +75,16 @@ public final class JacksonStructure implements Structure<JsonNode> {
         throw new IllegalStateException("Could not combine: " + one + " / " + two);
     }
 
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "[]";
-    }
-
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static <T> Stream<T> stream(Iterable<T> elements) {
         return elements != null && elements.iterator().hasNext()
             ? StreamSupport.stream(elements.spliterator(), false)
             : Stream.empty();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[]";
     }
 }
