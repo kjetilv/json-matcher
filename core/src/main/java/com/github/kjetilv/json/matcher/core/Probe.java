@@ -13,5 +13,5 @@ public sealed interface Probe<T> permits LeafProbe, NodeProbe {
 
     List<String> trace();
 
-    Stream<LeafProbe<T>> leaves();
+    Stream<Probe<T>> leaves();
 }

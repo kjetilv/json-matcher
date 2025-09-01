@@ -100,16 +100,22 @@ sealed interface Path<T> {
         @Override
         public Optional<Extract<T>> extract(T main) {
             return Optional.of(
-                    Maps.toMap(objectFields.stream().flatMap(objectField ->
-                        objectField.extract(main)
-                            .map(Extract::value)
-                            .map(value ->
-                                Map.entry(objectField.name(), value))
-                            .stream())))
+                    Maps.toMap(objectFields.stream()
+                        .map(objectField ->
+                            entry(main, objectField)
+                        ).flatMap(Optional::stream)
+                    ))
                 .filter(map ->
                     !map.isEmpty())
                 .map(map -> () ->
                     structure.toObject(map));
+        }
+
+        private Optional<Map.Entry<String, T>> entry(T main, ObjectField<T> objectField) {
+            return objectField.extract(main)
+                .map(Extract::value)
+                .map(value ->
+                    Map.entry(objectField.name(), value));
         }
     }
 

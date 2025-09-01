@@ -6,8 +6,8 @@ public record Rate(int num, int den) {
 
     public static Rate FAILURE = new Rate(0, 1);
 
-    public static Rate of(int num, int den) {
-        return num == den ? SUCCESS : new Rate(num, den);
+    public static Rate of(int numerator, int denominator) {
+        return numerator == denominator ? SUCCESS : new Rate(numerator, denominator);
     }
 
     public Rate(int num, int den) {
@@ -31,7 +31,8 @@ public record Rate(int num, int den) {
         }
         return new Rate(
             this.num() * rate.den() + rate.num() * this.den(),
-            this.den() * rate.den());
+            this.den() * rate.den()
+        );
     }
 
     boolean is100Percent() {

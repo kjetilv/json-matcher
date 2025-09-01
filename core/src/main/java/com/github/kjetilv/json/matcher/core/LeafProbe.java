@@ -7,7 +7,7 @@ public sealed interface LeafProbe<T> extends Probe<T> permits FoundLeaf, DeadLea
     T main();
 
     @Override
-    default Stream<LeafProbe<T>> leaves() {
+    default Stream<Probe<T>> leaves() {
         return Stream.of(this);
     }
 }

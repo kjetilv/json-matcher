@@ -17,7 +17,7 @@ record FoundNode<T>(List<Probe<T>> branches, List<String> trace) implements Node
     }
 
     @Override
-    public Stream<LeafProbe<T>> leaves() {
+    public Stream<Probe<T>> leaves() {
         return branches.stream().flatMap(Probe::leaves);
     }
 

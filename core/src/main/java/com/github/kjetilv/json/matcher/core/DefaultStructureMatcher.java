@@ -55,17 +55,21 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
 
     @Override
     public Map<Pointer<T>, Diff<T>> subdiff(T subset) {
-        return Maps.toMap(pointersIn(subset).sorted(Comparator.naturalOrder())
+        return Maps.toMap(pointersIn(subset)
+            .sorted(Comparator.naturalOrder())
             .map(pointer ->
-                Map.entry(pointer, pointer.get(subset)
-                    .filter(value -> !str.isNull(value))
-                    .map(value ->
-                        new Diff<>(value, pointer.get(main).orElse(null)))))
+                Map.entry(
+                    pointer, pointer.get(subset)
+                        .filter(value -> !str.isNull(value))
+                        .map(value ->
+                            new Diff<>(value, pointer.get(main).orElse(null)))
+                ))
             .filter(entry ->
                 entry.getValue()
                     .filter(Diff::isDiff).isPresent())
             .map(entry ->
-                Map.entry(entry.getKey(), entry.getValue().get())));
+                Map.entry(entry.getKey(), entry.getValue().get()))
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -86,9 +90,11 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
             if (str.namedFields(part).findAny().isEmpty()) {
                 return empty();
             }
-            return str.mapNamedFields(part, (name, subpart) ->
-                pointersIn(subpart).map(pointer ->
-                    new Pointer.Node<>(name, pointer, str)));
+            return str.mapNamedFields(
+                part, (name, subpart) ->
+                    pointersIn(subpart).map(pointer ->
+                        new Pointer.Node<>(name, pointer, str))
+            );
         }
         if (str.isArray(part)) {
             if (str.arrayElements(part).findAny().isEmpty()) {
@@ -96,18 +102,22 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
             }
             AtomicInteger index = new AtomicInteger();
             Supplier<Integer> nextIndex = index::getAndIncrement;
-            return str.mapArrayElements(part, element ->
-                pointersIn(element).map(pointer ->
-                    new Pointer.Array<>(nextIndex.get(), pointer, str)));
+            return str.mapArrayElements(
+                part, element ->
+                    pointersIn(element).map(pointer ->
+                        new Pointer.Array<>(nextIndex.get(), pointer, str))
+            );
         }
         return empty();
     }
 
     private Stream<Path<T>> pathsIn(T part) {
         if (str.isObject(part)) {
-            List<Path.ObjectField<T>> objectFields = str.mapNamedFields(part, (name, subpart) ->
-                    pathsIn(subpart).map(path ->
-                        new Path.ObjectField<>(name, path, str)))
+            List<Path.ObjectField<T>> objectFields = str.mapNamedFields(
+                    part, (name, subpart) ->
+                        pathsIn(subpart).map(path ->
+                            new Path.ObjectField<>(name, path, str))
+                )
                 .toList();
             return Stream.of(new Path.ExactObject<>(objectFields, str));
         }
