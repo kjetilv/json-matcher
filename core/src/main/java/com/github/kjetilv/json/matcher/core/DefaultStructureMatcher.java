@@ -8,30 +8,6 @@ import java.util.stream.Stream;
 record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStrategy arr)
     implements StructureMatcher<T>, StructureExtractor<T>, StructureDiffer<T> {
 
-    static <T> Stream<Probe<T>> exactPaths(List<String> trace, List<T> mainElements, List<Path<T>> paths) {
-        var pathsSize = paths.size();
-        var mainSize = mainElements.size();
-        if (pathsSize < mainSize) {
-            return Stream.concat(
-                matches(mainElements, paths, trace),
-                mainElements.subList(pathsSize, mainSize)
-                    .stream()
-                    .map(element ->
-                        DeadLeaf.deadEnd(element, trace))
-            );
-        }
-        if (pathsSize > mainSize) {
-            return Stream.concat(
-                matches(mainElements, paths, trace),
-                paths.subList(mainSize, pathsSize)
-                    .stream()
-                    .flatMap(path ->
-                        path.probe(null, trace))
-            );
-        }
-        return matches(mainElements, paths, trace);
-    }
-
     DefaultStructureMatcher {
         Objects.requireNonNull(main, "main");
         Objects.requireNonNull(str, "str");
@@ -113,11 +89,11 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
 
     private Stream<Path<T>> pathsIn(T part) {
         if (str.isObject(part)) {
-            return Stream.of(new Path.ExactObject<>(
+            return Stream.of(new Paths.ExactObject<>(
                 str.mapNamedFields(
                         part, (name, subpart) ->
                             pathsIn(subpart).map(path ->
-                                new Path.ObjectField<>(name, path, str))
+                                new Paths.ObjectField<>(name, path, str))
                     )
                     .toList(),
                 str
@@ -130,7 +106,7 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
                 case null, default -> subseq(arrayPaths(part));
             };
         }
-        return Stream.of(new Path.Destination<>(part));
+        return Stream.of(new Paths.Destination<>(part));
     }
 
     private Stream<Path<T>> arrayPaths(T part) {
@@ -138,15 +114,15 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
     }
 
     private Stream<Path<T>> exact(Stream<Path<T>> paths) {
-        return Stream.of(new Path.ExactMatches<>(paths.toList(), str));
+        return Stream.of(new Paths.ExactMatches<>(paths.toList(), str));
     }
 
     private Stream<Path<T>> subseq(Stream<Path<T>> paths) {
-        return Stream.of(new Path.Subsequence<>(paths.toList(), str));
+        return Stream.of(new Paths.Subsequence<>(paths.toList(), str));
     }
 
     private Stream<Path<T>> subset(Stream<Path<T>> paths) {
-        return paths.map(path -> new Path.Subset<>(path, str));
+        return paths.map(path -> new Paths.Subset<>(path, str));
     }
 
     private static final Pointer.Leaf<?> EMPTY_LEAF = new Pointer.Leaf<>();
@@ -160,10 +136,4 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
         return (Pointer.Leaf<T>) EMPTY_LEAF;
     }
 
-    private static <T> Stream<Probe<T>> matches(List<T> mainElements, List<Path<T>> paths, List<String> trace) {
-        return Zip.of(paths, mainElements)
-            .map(Zip.Idxd::t)
-            .flatMap(pathNode ->
-                pathNode.p1().probe(pathNode.p2(), trace));
-    }
 }

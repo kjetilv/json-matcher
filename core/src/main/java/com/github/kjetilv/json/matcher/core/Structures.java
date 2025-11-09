@@ -23,6 +23,11 @@ public final class Structures {
         return defaultImpl(obj, structure, arrayStrategy);
     }
 
+    public static final Structure<Object> MAPS = new MapsStructure();
+
+    private Structures() {
+    }
+
     private static <T> DefaultStructureMatcher<T> defaultImpl(
         T obj,
         Structure<T> structure,
@@ -34,8 +39,5 @@ public final class Structures {
     public enum ArrayStrategy {
 
         SUBSET, SUBSEQ, EXACT
-    }
-
-    private Structures() {
     }
 }

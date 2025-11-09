@@ -1,7 +1,6 @@
 package com.github.kjetilv.json.matcher.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.kjetilv.json.matcher.core.MapsStructure;
 import com.github.kjetilv.json.matcher.core.StructureMatcher;
 import com.github.kjetilv.json.matcher.core.Structures;
 import org.junit.jupiter.api.AfterEach;
@@ -32,7 +31,7 @@ class JsonMatcherTest {
         );
         subsetMatcher2 = Structures.matcher(
             JsonDings.map(JSON),
-            new MapsStructure(),
+            Structures.MAPS,
             Structures.ArrayStrategy.SUBSET
         );
         exactMatcher1 = Structures.matcher(
@@ -42,7 +41,7 @@ class JsonMatcherTest {
         );
         exactMatcher2 = Structures.matcher(
             JsonDings.map(JSON),
-            new MapsStructure(),
+            Structures.MAPS,
             Structures.ArrayStrategy.EXACT
         );
     }
@@ -316,7 +315,7 @@ class JsonMatcherTest {
                       "foo": [ 1, 2, 3 ]
                     }
                     """),
-            new MapsStructure(),
+            Structures.MAPS,
             Structures.ArrayStrategy.EXACT
         ));
     }
@@ -663,7 +662,7 @@ class JsonMatcherTest {
         assertNotPart(
             Structures.matcher(
                 JsonDings.map(json),
-                new MapsStructure(),
+                Structures.MAPS,
                 Structures.ArrayStrategy.SUBSET
             ),
             JsonDings.map(subset)

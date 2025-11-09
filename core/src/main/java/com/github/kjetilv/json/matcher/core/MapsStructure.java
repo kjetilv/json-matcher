@@ -6,8 +6,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-@SuppressWarnings("unused")
-public final class MapsStructure implements Structure<Object> {
+final class MapsStructure implements Structure<Object> {
 
     @Override
     public boolean isNull(Object object) {
@@ -50,7 +49,8 @@ public final class MapsStructure implements Structure<Object> {
     @SuppressWarnings("unchecked")
     @Override
     public Stream<Map.Entry<String, Object>> namedFields(Object object) {
-        return object instanceof Map<?, ?> map ? ((Map<String, Object>) map).entrySet().stream() : Stream.empty();
+        return object instanceof Map<?, ?> map ? ((Map<String, Object>) map).entrySet()
+            .stream() : Stream.empty();
     }
 
     @Override
