@@ -14,71 +14,75 @@ public class JsonExtractorTest {
 
     @Test
     void canExtractSimple() {
-        JsonNode main = JsonDings.json(
+        var main = JsonDings.json(
             """
-            {
-              "foo": {
-                "bar": {
-                  "zot": 42,
-                  "arrs": [
-                    {
-                      "key": "a",
-                      "val": 1
+                {
+                  "foo": {
+                    "bar": {
+                      "zot": 42,
+                      "arrs": [
+                        {
+                          "key": "a",
+                          "val": 1
+                        },
+                        {
+                          "key": "b",
+                          "val":2
+                        }
+                      ]
                     },
-                    {
-                      "key": "b",
-                      "val":2
-                    }
-                  ]
-                },
-                "zip": true,
-                "more": "stuff"
-              },
-              "qos": 1.5
-            }
-            """);
+                    "zip": true,
+                    "more": "stuff"
+                  },
+                  "qos": 1.5
+                }
+                """);
 
-        StructureMatcher<JsonNode> structureMatcher = matcher(main);
-        StructureExtractor<JsonNode> extractor = extractor(main);
-        StructureMatcher<JsonNode> matcher = structureMatcher;
-        StructureDiffer<JsonNode> differ = differ(main);
+        var structureMatcher = matcher(main);
+        var extractor = extractor(main);
+        var matcher = structureMatcher;
+        var differ = differ(main);
 
-        JsonNode mask = JsonDings.json(
+        var mask = JsonDings.json(
             """
-            {
-              "foo": {
-                "bar": {
-                  "zot": 43,
-                  "arrs":
-                    [
-                      null,
-                      {
-                        "key": "a",
-                        "val": 2
-                      },
-                      {
-                      }
-                    ]
-                },
-                "zip": true
-              },
-              "qos": 1.5
-            }
-            """
+                {
+                  "foo": {
+                    "bar": {
+                      "zot": 43,
+                      "arrs":
+                        [
+                          null,
+                          {
+                            "key": "a",
+                            "val": 2
+                          },
+                          {
+                          }
+                        ]
+                    },
+                    "zip": true
+                  },
+                  "qos": 1.5
+                }
+                """
         );
         assertThat(extractor.extract(mask)).hasValueSatisfying(subset -> {
             assertThat(matcher.contains(subset)).isTrue();
             Match<JsonNode> match = matcher(subset).match(mask);
             System.out.println("\nPathways\n");
-            match.pathways().forEach(System.out::println);
+            match.pathways().stream()
+                .flatMap(probe -> probe.lines("", "  "))
+                .forEach(System.out::println);
             System.out.println("\nStructure\n");
-            System.out.println(main);
+            System.out.println("  " + main);
             System.out.println("\nMask\n");
-            System.out.println(mask);
+            System.out.println("  " + mask);
             System.out.println("\nSubset\n");
-            System.out.println(subset);
+            System.out.println("  " + subset);
             System.out.println("\nLeaves\n");
-            match.leaves().forEach(System.out::println);
+            match.leaves()
+                .map(l -> "  " + l)
+                .forEach(System.out::println);
         });
 
         Map<Pointer<JsonNode>, Diff<JsonNode>> subdiff = differ.subdiff(mask);

@@ -1,10 +1,11 @@
 package com.github.kjetilv.json.matcher.core;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static com.github.kjetilv.json.matcher.core.DeadLeaf.deadEnd;
 
 sealed interface Path<T> {
 
@@ -54,8 +55,11 @@ sealed interface Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            List<T> elements = structure.listElements(main);
-            return DefaultStructureMatcher.exactPaths(trace, elements, paths);
+            return DefaultStructureMatcher.exactPaths(
+                trace,
+                structure.listElements(main),
+                paths
+            );
         }
 
         @Override
@@ -90,11 +94,10 @@ sealed interface Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            List<Probe<T>> probes = objectFields.stream()
-                .flatMap(objectField ->
-                    objectField.probe(main, trace))
-                .toList();
-            return Stream.of(new FoundNode<>(probes, trace));
+            return Stream.of(new FoundNode<>(
+                branches(main, trace),
+                trace
+            ));
         }
 
         @Override
@@ -117,6 +120,13 @@ sealed interface Path<T> {
                 .map(value ->
                     Map.entry(objectField.name(), value));
         }
+
+        private List<Probe<T>> branches(T main, List<String> trace) {
+            return objectFields.stream()
+                .flatMap(objectField ->
+                    objectField.probe(main, trace))
+                .toList();
+        }
     }
 
     record ObjectField<T>(String name, Path<T> next, Structure<T> structure)
@@ -128,7 +138,7 @@ sealed interface Path<T> {
                 .map(field ->
                     next.probe(field, addTo(trace, name)))
                 .orElseGet(() ->
-                    Stream.of(deadEnd(main, trace)));
+                    Stream.of(DeadLeaf.deadEnd(main, trace)));
         }
 
         @Override
@@ -149,21 +159,20 @@ sealed interface Path<T> {
 
         @Override
         public Stream<Probe<T>> probe(T main, List<String> trace) {
-            List<T> mainElements = structure.listElements(main);
+            var mainElements = structure.listElements(main);
             if (mainElements.size() < paths.size()) {
-                return Stream.of(deadEnd(main, trace));
+                return deadEnd(main, trace);
             }
-            OptionalInt firstMatch = IntStream.range(0, mainElements.size())
-                .filter(index ->
-                    paths.getFirst()
-                        .probe(mainElements.get(index), trace)
-                        .allMatch(Probe::found))
-                .findFirst();
-            if (firstMatch.isEmpty()) {
-                return Stream.of(deadEnd(main, trace));
-            }
-            List<T> subsequence = subsequence(firstMatch.getAsInt(), mainElements);
-            return DefaultStructureMatcher.exactPaths(trace, subsequence, paths);
+            return match(trace, mainElements).map(startIndex ->
+                    exactPaths(
+                        startIndex,
+                        mainElements,
+                        paths,
+                        trace
+                    ))
+                .orElseGet(() ->
+                    deadEnd(main, trace));
+
         }
 
         @Override
@@ -172,11 +181,37 @@ sealed interface Path<T> {
                 .map(value -> () -> value);
         }
 
-        private List<T> subsequence(int startIndex, List<T> nodes) {
-            return nodes.subList(
-                startIndex,
-                Math.min(nodes.size(), startIndex + paths.size())
+        private Optional<Integer> match(List<String> trace, List<T> mainElements) {
+            return IntStream.range(0, mainElements.size())
+                .filter(index ->
+                    paths.getFirst()
+                        .probe(mainElements.get(index), trace)
+                        .allMatch(Probe::found))
+                .boxed()
+                .findFirst();
+        }
+
+        private static <T> Stream<Probe<T>> exactPaths(
+            Integer startIndex,
+            List<T> mainElements,
+            List<Path<T>> paths,
+            List<String> trace
+        ) {
+            return DefaultStructureMatcher.exactPaths(
+                trace,
+                mainElements.subList(
+                    startIndex,
+                    Math.min(mainElements.size(), startIndex + paths.size())
+                ),
+                paths
             );
+        }
+
+        private static <T> Stream<Probe<T>> deadEnd(
+            T main,
+            List<String> trace
+        ) {
+            return Stream.of(DeadLeaf.deadEnd(main, trace));
         }
     }
 }

@@ -11,7 +11,7 @@ class DefaultStructureMatcherTest {
 
     @Test
     void diff1() {
-        JsonNode json1 = JsonDings.json(
+        var json1 = JsonDings.json(
             //language=json
             """
                 {
@@ -19,7 +19,7 @@ class DefaultStructureMatcherTest {
                   "zot": true
                 }
                 """);
-        JsonNode json2 = JsonDings.json(
+        var json2 = JsonDings.json(
             //language=json
             """
                 {

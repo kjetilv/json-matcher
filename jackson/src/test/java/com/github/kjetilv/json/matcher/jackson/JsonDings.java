@@ -17,7 +17,6 @@ final class JsonDings {
     }
 
     static JsonNode json(
-        //language=json
         String content
     ) {
         try {

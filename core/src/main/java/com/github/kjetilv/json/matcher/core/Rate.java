@@ -17,7 +17,7 @@ public record Rate(int num, int den) {
         if (den < 1) {
             throw new IllegalArgumentException("Invalid denominator: " + den);
         }
-        int div = gcd(num, den);
+        var div = gcd(num, den);
         this.num = num / div;
         this.den = den / div;
     }

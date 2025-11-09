@@ -61,7 +61,7 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
         public Object map(Object leaf) {
             List<Object> list = new ArrayList<>(index + 1);
             if (index > 0) {
-                for (int i = 0; i < index; i++) {
+                for (var i = 0; i < index; i++) {
                     list.add(null);
                 }
             }
@@ -71,11 +71,9 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
 
         @Override
         public Stream<String> get() {
-            Stream<String> stream = IntStream.of(index).mapToObj(Integer::toString);
-            return switch (elem) {
-                case NameChain nameChain -> Stream.concat(stream, nameChain.get());
-                case null, default -> stream;
-            };
+            return elem instanceof NameChain nameChain
+                ? Stream.concat(elementStream(), nameChain.get())
+                : elementStream();
         }
 
         @SuppressWarnings("NullableProblems")
@@ -84,6 +82,10 @@ public sealed interface Pointer<T> extends Comparable<Pointer<T>> {
             return pointer instanceof Pointer.Array<T> array
                 ? Integer.compare(index(), array.index())
                 : -1;
+        }
+
+        private Stream<String> elementStream() {
+            return IntStream.of(index).mapToObj(Integer::toString);
         }
 
         @SuppressWarnings("NullableProblems")

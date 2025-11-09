@@ -9,8 +9,8 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
     implements StructureMatcher<T>, StructureExtractor<T>, StructureDiffer<T> {
 
     static <T> Stream<Probe<T>> exactPaths(List<String> trace, List<T> mainElements, List<Path<T>> paths) {
-        int pathsSize = paths.size();
-        int mainSize = mainElements.size();
+        var pathsSize = paths.size();
+        var mainSize = mainElements.size();
         if (pathsSize < mainSize) {
             return Stream.concat(
                 matches(mainElements, paths, trace),
@@ -100,7 +100,7 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
             if (str.arrayElements(part).findAny().isEmpty()) {
                 return empty();
             }
-            AtomicInteger index = new AtomicInteger();
+            var index = new AtomicInteger();
             Supplier<Integer> nextIndex = index::getAndIncrement;
             return str.mapArrayElements(
                 part, element ->
@@ -113,26 +113,28 @@ record DefaultStructureMatcher<T>(T main, Structure<T> str, Structures.ArrayStra
 
     private Stream<Path<T>> pathsIn(T part) {
         if (str.isObject(part)) {
-            List<Path.ObjectField<T>> objectFields = str.mapNamedFields(
-                    part, (name, subpart) ->
-                        pathsIn(subpart).map(path ->
-                            new Path.ObjectField<>(name, path, str))
-                )
-                .toList();
-            return Stream.of(new Path.ExactObject<>(objectFields, str));
+            return Stream.of(new Path.ExactObject<>(
+                str.mapNamedFields(
+                        part, (name, subpart) ->
+                            pathsIn(subpart).map(path ->
+                                new Path.ObjectField<>(name, path, str))
+                    )
+                    .toList(),
+                str
+            ));
         }
         if (str.isArray(part)) {
-            Stream<Path<T>> arrayParts = str.mapArrayElements(part, this::pathsIn);
-            if (arr == null) {
-                return subseq(arrayParts);
-            }
             return switch (arr) {
-                case EXACT -> exact(arrayParts);
-                case SUBSEQ -> subseq(arrayParts);
-                case SUBSET -> subset(arrayParts);
+                case EXACT -> exact(arrayPaths(part));
+                case SUBSET -> subset(arrayPaths(part));
+                case null, default -> subseq(arrayPaths(part));
             };
         }
         return Stream.of(new Path.Destination<>(part));
+    }
+
+    private Stream<Path<T>> arrayPaths(T part) {
+        return str.mapArrayElements(part, this::pathsIn);
     }
 
     private Stream<Path<T>> exact(Stream<Path<T>> paths) {

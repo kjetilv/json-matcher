@@ -10,10 +10,23 @@ record FoundNode<T>(List<Probe<T>> branches, List<String> trace) implements Node
         if (branches.isEmpty()) {
             return Rate.SUCCESS;
         }
-        long count = branches.stream().filter(Probe::found).count();
+        var count = branches.stream()
+            .filter(Probe::found).count();
         return Rate.of(
             Math.toIntExact(count),
-            branches.size());
+            branches.size()
+        );
+    }
+
+    @Override
+    public Stream<String> lines(String indent, String delta) {
+        return Stream.concat(
+            Stream.of(getClass().getSimpleName() + "[[" + branches.size() + "]" + Print.trace(trace)),
+            branches.stream().flatMap(sub ->
+                    sub.lines(indent + delta, delta))
+                .map(line ->
+                    delta + line)
+        );
     }
 
     @Override

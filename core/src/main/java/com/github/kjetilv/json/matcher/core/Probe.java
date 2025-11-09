@@ -14,4 +14,6 @@ public sealed interface Probe<T> permits LeafProbe, NodeProbe {
     List<String> trace();
 
     Stream<Probe<T>> leaves();
+
+    Stream<String> lines(String indent, String delta);
 }

@@ -29,11 +29,11 @@ public final class Combine {
         if (two == null || two.isEmpty()) {
             return new ArrayList<>(one);
         }
-        int oneLen = one.size();
-        int twoLen = two.size();
-        int len = Math.max(oneLen, twoLen);
+        var oneLen = one.size();
+        var twoLen = two.size();
+        var len = Math.max(oneLen, twoLen);
         List<Object> list = new ArrayList<>(len);
-        for (int i = 0; i < len; i++) {
+        for (var i = 0; i < len; i++) {
             list.add(objects(
                 oneLen > i ? one.get(i) : null,
                 twoLen > i ? two.get(i) : null
